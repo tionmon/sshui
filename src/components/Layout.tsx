@@ -6,6 +6,7 @@ import {
   SettingsOutlined,
   DataObjectOutlined,
   LanOutlined,
+  GitHub,
   TerminalRounded,
   LightModeOutlined,
   DarkModeOutlined,
@@ -14,6 +15,8 @@ import {
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { loadSettings } from '../api/tauri'
 import { useThemeMode } from '../contexts/ThemeContext'
 import HostsPage from '../pages/HostsPage'
 import KeysPage from '../pages/KeysPage'
@@ -21,6 +24,7 @@ import BackupsPage from '../pages/BackupsPage'
 import SettingsPage from '../pages/SettingsPage'
 import ConfigEditorPage from '../pages/ConfigEditorPage'
 import HostsFilePage from '../pages/HostsFilePage'
+import GithubPage from '../pages/GithubPage'
 
 const sidebarWidth = 232
 
@@ -59,12 +63,15 @@ function Layout() {
   const location = useLocation()
   const { t } = useTranslation()
   const { themeMode, toggleTheme } = useThemeMode()
+  const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: loadSettings })
+  const showGithub = settings?.show_github ?? true
 
   const menuItems = [
     { text: t('menu.hosts'), icon: <DnsOutlined />, path: '/' },
     { text: t('menu.sshKeys'), icon: <VpnKeyOutlined />, path: '/keys' },
     { text: t('menu.configEditor'), icon: <DataObjectOutlined />, path: '/editor' },
     { text: t('menu.hostsFile'), icon: <LanOutlined />, path: '/hosts-file' },
+    ...(showGithub ? [{ text: 'GitHub', icon: <GitHub />, path: '/github' }] : []),
     { text: t('menu.backups'), icon: <HistoryOutlined />, path: '/backups' },
   ]
 
@@ -159,6 +166,7 @@ function Layout() {
             <Route path="/keys" element={<KeysPage />} />
             <Route path="/editor" element={<ConfigEditorPage />} />
             <Route path="/hosts-file" element={<HostsFilePage />} />
+            <Route path="/github" element={<GithubPage />} />
             <Route path="/backups" element={<BackupsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

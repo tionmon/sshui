@@ -7,6 +7,13 @@ pub struct AppSettings {
     pub auto_backup: bool,
     pub backup_limit: u32,
     pub confirm_delete: bool,
+    /// Show the GitHub page in the sidebar
+    #[serde(default = "default_true")]
+    pub show_github: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Default for AppSettings {
@@ -15,6 +22,7 @@ impl Default for AppSettings {
             auto_backup: true,
             backup_limit: 10,
             confirm_delete: true,
+            show_github: true,
         }
     }
 }

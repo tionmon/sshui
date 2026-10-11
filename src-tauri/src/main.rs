@@ -5,7 +5,7 @@
 mod commands;
 mod tray;
 
-use commands::{config, keys, backup, system, settings, hosts_file};
+use commands::{config, keys, backup, system, settings, hosts_file, github};
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
@@ -77,6 +77,16 @@ fn main() {
             hosts_file::apply_hosts_scheme,
             hosts_file::save_system_hosts,
             hosts_file::open_hosts_backup_dir,
+            github::github_status,
+            github::github_login,
+            github::github_login_cancel,
+            github::github_logout,
+            github::github_ssh_test,
+            github::github_trust_host_keys,
+            github::github_set_git_identity,
+            github::github_set_git_proxy,
+            github::github_test_proxy,
+            github::open_external_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

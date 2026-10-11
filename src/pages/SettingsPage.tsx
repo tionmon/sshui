@@ -1,57 +1,22 @@
-import { Box, Button, Paper, Switch, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Box, Button, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { ContrastOutlined, DarkModeOutlined, LightModeOutlined, FolderOpenOutlined } from '@mui/icons-material'
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getVersion } from '@tauri-apps/api/app'
 import { useThemeMode } from '../contexts/ThemeContext'
 import { useToast, errorMessage } from '../contexts/ToastContext'
 import PageHeader from '../components/PageHeader'
+import { Section, Row } from '../components/SettingsSection'
 import { FONT_MONO } from '../theme'
 import { openConfigDir, loadSettings, saveSettings, type AppSettings } from '../api/tauri'
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="subtitle1" sx={{ mb: 1, px: 0.25 }}>
-        {title}
-      </Typography>
-      <Paper
-        variant="outlined"
-        sx={(theme) => ({
-          overflow: 'hidden',
-          boxShadow: `0 1px 2px rgba(0,0,0,.05), ${theme.tokens.edge}`,
-          '& > * + *': { borderTop: `1px solid ${theme.tokens.border}` },
-        })}
-      >
-        {children}
-      </Paper>
-    </Box>
-  )
-}
-
-function Row({ label, description, control }: { label: ReactNode; description?: ReactNode; control?: ReactNode }) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3, px: 2.5, py: 2 }}>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body1" fontWeight={500}>
-          {label}
-        </Typography>
-        {description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-            {description}
-          </Typography>
-        )}
-      </Box>
-      {control && <Box sx={{ flexShrink: 0 }}>{control}</Box>}
-    </Box>
-  )
-}
 
 function SettingsPage() {
   const [autoBackup, setAutoBackup] = useState(true)
   const [backupLimit, setBackupLimit] = useState(10)
   const [confirmDelete, setConfirmDelete] = useState(true)
+  const [showGithub, setShowGithub] = useState(true)
+  const queryClient = useQueryClient()
   const { themeMode, setThemeMode } = useThemeMode()
   const toast = useToast()
   const { t, i18n } = useTranslation()
@@ -64,6 +29,7 @@ function SettingsPage() {
         setAutoBackup(settings.auto_backup)
         setBackupLimit(settings.backup_limit)
         setConfirmDelete(settings.confirm_delete)
+        setShowGithub(settings.show_github ?? true)
       })
       .catch((error) => {
         console.error('Failed to load settings:', error)
@@ -75,11 +41,13 @@ function SettingsPage() {
       auto_backup: autoBackup,
       backup_limit: backupLimit,
       confirm_delete: confirmDelete,
+      show_github: showGithub,
       ...updates,
     }
 
     try {
       await saveSettings(newSettings)
+      queryClient.setQueryData(['settings'], newSettings)
     } catch (error) {
       toast(`${t('settings.saveFailed')}: ${errorMessage(error)}`, 'error')
     }
@@ -180,6 +148,23 @@ function SettingsPage() {
                 const newValue = e.target.checked
                 setConfirmDelete(newValue)
                 handleSaveSettings({ confirm_delete: newValue })
+              }}
+            />
+          }
+        />
+      </Section>
+
+      <Section title={t('settings.advanced')}>
+        <Row
+          label={t('settings.showGithub')}
+          description={t('settings.showGithubHelp')}
+          control={
+            <Switch
+              checked={showGithub}
+              onChange={(e) => {
+                const newValue = e.target.checked
+                setShowGithub(newValue)
+                handleSaveSettings({ show_github: newValue })
               }}
             />
           }

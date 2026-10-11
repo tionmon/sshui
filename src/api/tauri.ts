@@ -131,6 +131,8 @@ export interface AppSettings {
   auto_backup: boolean
   backup_limit: number
   confirm_delete: boolean
+  /** Show the GitHub page in the sidebar (missing in older settings files → true) */
+  show_github?: boolean
 }
 
 export const loadSettings = (): Promise<AppSettings> =>
@@ -174,3 +176,56 @@ export const saveSystemHosts = (content: string): Promise<HostsState> =>
 
 export const openHostsBackupDir = (): Promise<void> =>
   invoke('open_hosts_backup_dir')
+
+// GitHub
+export interface GhAccount {
+  login: string
+  active: boolean
+  state: string
+  token_source: string
+  scopes: string[]
+  git_protocol: string
+}
+
+export interface GithubStatus {
+  gh: { installed: boolean; version: string | null; accounts: GhAccount[] }
+  git: {
+    installed: boolean
+    version: string | null
+    user_name: string | null
+    user_email: string | null
+    http_proxy: string | null
+    https_proxy: string | null
+    credential_helper: string | null
+  }
+  env_proxy: Record<string, string>
+  known_host: boolean
+}
+
+export interface SshTestResult {
+  status: 'ok' | 'denied' | 'network' | 'error'
+  user: string | null
+  message: string
+}
+
+export interface ProxyTestResult {
+  reachable: boolean
+  github_ok: boolean
+  elapsed_ms: number
+  message: string
+}
+
+/** Emitted during githubLogin() with the device code to enter on github.com */
+export const GITHUB_LOGIN_CODE_EVENT = 'github-login-code'
+
+export const githubStatus = (): Promise<GithubStatus> => invoke('github_status')
+export const githubLogin = (): Promise<void> => invoke('github_login')
+export const githubLoginCancel = (): Promise<void> => invoke('github_login_cancel')
+export const githubLogout = (login: string): Promise<void> => invoke('github_logout', { login })
+export const githubSshTest = (): Promise<SshTestResult> => invoke('github_ssh_test')
+export const githubTrustHostKeys = (): Promise<number> => invoke('github_trust_host_keys')
+export const githubSetGitIdentity = (name: string, email: string): Promise<void> =>
+  invoke('github_set_git_identity', { name, email })
+export const githubSetGitProxy = (proxy: string | null): Promise<void> => invoke('github_set_git_proxy', { proxy })
+export const githubTestProxy = (proxy: string | null): Promise<ProxyTestResult> => invoke('github_test_proxy', { proxy })
+export const openExternalUrl = (url: string): Promise<void> => invoke('open_external_url', { url })
