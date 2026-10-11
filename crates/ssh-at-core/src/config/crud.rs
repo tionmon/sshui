@@ -365,13 +365,13 @@ pub fn serialize_ssh_config(config: &SshConfig) -> Result<String> {
         if let Some(timeout) = host.connect_timeout {
             output.push_str(&format!("  ConnectTimeout {}\n", timeout));
         }
-        if let Some(ref local_fwd) = host.local_forward {
+        for local_fwd in &host.local_forward {
             output.push_str(&format!("  LocalForward {}\n", local_fwd));
         }
-        if let Some(ref remote_fwd) = host.remote_forward {
+        for remote_fwd in &host.remote_forward {
             output.push_str(&format!("  RemoteForward {}\n", remote_fwd));
         }
-        if let Some(ref dynamic_fwd) = host.dynamic_forward {
+        for dynamic_fwd in &host.dynamic_forward {
             output.push_str(&format!("  DynamicForward {}\n", dynamic_fwd));
         }
         if let Some(ref pubkey_types) = host.pubkey_accepted_key_types {
@@ -381,8 +381,10 @@ pub fn serialize_ssh_config(config: &SshConfig) -> Result<String> {
             output.push_str(&format!("  HostKeyAlgorithms {}\n", host_key_algos));
         }
 
-        // Extra options
-        for (key, value) in &host.extra_options {
+        // Extra options, sorted so repeated saves produce the same file
+        let mut extra: Vec<_> = host.extra_options.iter().collect();
+        extra.sort_by_key(|(key, _)| key.to_lowercase());
+        for (key, value) in extra {
             output.push_str(&format!("  {} {}\n", key, value));
         }
 
@@ -414,9 +416,9 @@ mod tests {
             compression: None,
             connection_attempts: None,
             connect_timeout: None,
-            local_forward: None,
-            remote_forward: None,
-            dynamic_forward: None,
+            local_forward: Vec::new(),
+            remote_forward: Vec::new(),
+            dynamic_forward: Vec::new(),
             pubkey_accepted_key_types: None,
             host_key_algorithms: None,
             extra_options: HashMap::new(),
@@ -460,9 +462,9 @@ mod tests {
             compression: Some(false),
             connection_attempts: Some(5),
             connect_timeout: Some(30),
-            local_forward: Some("8080 localhost:80".to_string()),
-            remote_forward: Some("9090 localhost:90".to_string()),
-            dynamic_forward: Some("1080".to_string()),
+            local_forward: vec!["8080 localhost:80".to_string(), "8443 localhost:443".to_string()],
+            remote_forward: vec!["9090 localhost:90".to_string()],
+            dynamic_forward: vec!["1080".to_string()],
             pubkey_accepted_key_types: None,
             host_key_algorithms: None,
             extra_options: {
@@ -493,7 +495,8 @@ mod tests {
         assert!(serialized.contains("Compression no"));
         assert!(serialized.contains("ConnectionAttempts 5"));
         assert!(serialized.contains("ConnectTimeout 30"));
-        assert!(serialized.contains("LocalForward 8080"));
+        assert!(serialized.contains("LocalForward 8080 localhost:80\n"));
+        assert!(serialized.contains("LocalForward 8443 localhost:443\n"));
         assert!(serialized.contains("RemoteForward 9090"));
         assert!(serialized.contains("DynamicForward 1080"));
         assert!(serialized.contains("CustomOption value"));

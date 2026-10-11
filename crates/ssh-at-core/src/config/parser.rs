@@ -156,9 +156,9 @@ fn apply_option_to_host(host: &mut HostEntry, key: &str, value: &str) {
         "compression" => host.compression = parse_yes_no(value),
         "connectionattempts" => host.connection_attempts = value.parse().ok(),
         "connecttimeout" => host.connect_timeout = value.parse().ok(),
-        "localforward" => host.local_forward = Some(value.to_string()),
-        "remoteforward" => host.remote_forward = Some(value.to_string()),
-        "dynamicforward" => host.dynamic_forward = Some(value.to_string()),
+        "localforward" => host.local_forward.push(value.to_string()),
+        "remoteforward" => host.remote_forward.push(value.to_string()),
+        "dynamicforward" => host.dynamic_forward.push(value.to_string()),
         _ => {
             // Store unknown options in extra_options
             host.extra_options.insert(key.to_string(), value.to_string());
@@ -298,9 +298,9 @@ Host tunnel
 "#;
 
         let config = parse_ssh_config(config_text).unwrap();
-        assert_eq!(config.hosts[0].local_forward, Some("8080 localhost:80".to_string()));
-        assert_eq!(config.hosts[0].remote_forward, Some("9090 localhost:90".to_string()));
-        assert_eq!(config.hosts[0].dynamic_forward, Some("1080".to_string()));
+        assert_eq!(config.hosts[0].local_forward, vec!["8080 localhost:80".to_string()]);
+        assert_eq!(config.hosts[0].remote_forward, vec!["9090 localhost:90".to_string()]);
+        assert_eq!(config.hosts[0].dynamic_forward, vec!["1080".to_string()]);
     }
 
     #[test]

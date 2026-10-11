@@ -16,9 +16,10 @@ export interface HostEntry {
   compression?: boolean
   connection_attempts?: number
   connect_timeout?: number
-  local_forward?: string
-  remote_forward?: string
-  dynamic_forward?: string
+  // One entry per config line, e.g. "8080 localhost:80" (listener, space, destination)
+  local_forward?: string[]
+  remote_forward?: string[]
+  dynamic_forward?: string[]
   pubkey_accepted_key_types?: string
   host_key_algorithms?: string
   extra_options?: Record<string, string>

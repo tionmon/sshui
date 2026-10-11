@@ -133,10 +133,13 @@ fn apply_option_to_host(host: &mut HostEntry, key: &str, value: &str) {
         "compression" => host.compression = parse_yes_no(value),
         "connectionattempts" => host.connection_attempts = value.parse().ok(),
         "connecttimeout" => host.connect_timeout = value.parse().ok(),
-        "localforward" => host.local_forward = Some(value.to_string()),
-        "remoteforward" => host.remote_forward = Some(value.to_string()),
-        "dynamicforward" => host.dynamic_forward = Some(value.to_string()),
-        "pubkeyacceptedkeytypes" => host.pubkey_accepted_key_types = Some(value.to_string()),
+        "localforward" => host.local_forward.push(value.to_string()),
+        "remoteforward" => host.remote_forward.push(value.to_string()),
+        "dynamicforward" => host.dynamic_forward.push(value.to_string()),
+        // PubkeyAcceptedAlgorithms is the OpenSSH 8.5+ name for the same option
+        "pubkeyacceptedkeytypes" | "pubkeyacceptedalgorithms" => {
+            host.pubkey_accepted_key_types = Some(value.to_string())
+        }
         "hostkeyalgorithms" => host.host_key_algorithms = Some(value.to_string()),
         _ => {
             host.extra_options.insert(key.to_string(), value.to_string());
@@ -149,5 +152,27 @@ fn parse_yes_no(value: &str) -> Option<bool> {
         "yes" | "true" => Some(true),
         "no" | "false" => Some(false),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_ssh_config;
+
+    #[test]
+    fn keeps_every_forward_line() {
+        let config = parse_ssh_config(
+            "Host tunnel\n  LocalForward 8080 localhost:80\n  LocalForward 8443 localhost:443\n  DynamicForward 1080\n",
+        )
+        .unwrap();
+        assert_eq!(config.hosts[0].local_forward, vec!["8080 localhost:80", "8443 localhost:443"]);
+        assert_eq!(config.hosts[0].dynamic_forward, vec!["1080"]);
+    }
+
+    #[test]
+    fn maps_pubkey_accepted_algorithms_alias() {
+        let config = parse_ssh_config("Host old\n  PubkeyAcceptedAlgorithms +ssh-rsa\n").unwrap();
+        assert_eq!(config.hosts[0].pubkey_accepted_key_types.as_deref(), Some("+ssh-rsa"));
+        assert!(config.hosts[0].extra_options.is_empty());
     }
 }

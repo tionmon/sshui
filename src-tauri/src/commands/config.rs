@@ -22,6 +22,7 @@ enum ValidationError {
     IdentityFileEmpty,
     IdentityFileExpandFailed,
     IdentityFileNotExist { path: String },
+    ForwardInvalid { kind: String, value: String },
 }
 
 impl std::fmt::Display for ValidationError {
@@ -133,8 +134,72 @@ fn validate_identity_file(identity_file: &Option<std::path::PathBuf>) -> Result<
     Ok(())
 }
 
+fn is_socket_path(s: &str) -> bool {
+    s.starts_with('/') || s.starts_with('~')
+}
+
+fn is_port(s: &str) -> bool {
+    s.parse::<u16>().is_ok()
+}
+
+/// `[bind_address:]port` (bind may be `*`, a host, or `[ipv6]`) or a Unix socket path.
+fn is_listen_spec(s: &str) -> bool {
+    if is_socket_path(s) || is_port(s) {
+        return true;
+    }
+    match s.rsplit_once(':') {
+        Some((bind, port)) => !bind.is_empty() && is_port(port),
+        None => false,
+    }
+}
+
+/// `host:port` (host may be `[ipv6]`) or a Unix socket path.
+fn is_destination_spec(s: &str) -> bool {
+    if is_socket_path(s) {
+        return true;
+    }
+    match s.rsplit_once(':') {
+        Some((host, port)) => !host.is_empty() && is_port(port),
+        None => false,
+    }
+}
+
+/// Validate a LocalForward/RemoteForward/DynamicForward value as written in
+/// ssh_config. Note the config form separates listener and destination with a
+/// space (`8080 localhost:80`); the `-L 8080:localhost:80` command-line form makes
+/// OpenSSH reject the whole config file.
+fn validate_forward(kind: &str, value: &str) -> Result<(), ValidationError> {
+    let parts: Vec<&str> = value.split_whitespace().collect();
+    let ok = match (kind, parts.as_slice()) {
+        ("DynamicForward", [listen]) => is_listen_spec(listen),
+        ("RemoteForward", [listen]) => is_listen_spec(listen), // remote dynamic (SOCKS) forward
+        ("LocalForward" | "RemoteForward", [listen, dest]) => {
+            is_listen_spec(listen) && is_destination_spec(dest)
+        }
+        _ => false,
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(ValidationError::ForwardInvalid {
+            kind: kind.to_string(),
+            value: value.to_string(),
+        })
+    }
+}
+
 // Unified validation for HostEntry
 fn validate_entry(entry: &HostEntry) -> Result<(), ValidationError> {
+    for (kind, values) in [
+        ("LocalForward", &entry.local_forward),
+        ("RemoteForward", &entry.remote_forward),
+        ("DynamicForward", &entry.dynamic_forward),
+    ] {
+        for value in values {
+            validate_forward(kind, value)?;
+        }
+    }
+
     // Validate host name
     if entry.host.trim().is_empty() {
         return Err(ValidationError::HostRequired);
@@ -262,4 +327,41 @@ pub async fn serialize_ssh_config(config: SshConfig) -> Result<String, String> {
 pub async fn parse_ssh_config(content: String) -> Result<SshConfig, String> {
     ssh_at_core::config::simple_parser::parse_ssh_config(&content)
         .map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_forward;
+
+    #[test]
+    fn accepts_valid_forwards() {
+        for (kind, value) in [
+            ("LocalForward", "8080 localhost:80"),
+            ("LocalForward", "127.0.0.1:8080 db.internal:5432"),
+            ("LocalForward", "[::1]:8080 [2001:db8::1]:443"),
+            ("LocalForward", "*:3000 /var/run/app.sock"),
+            ("RemoteForward", "9090 localhost:90"),
+            ("RemoteForward", "1080"),
+            ("DynamicForward", "1080"),
+            ("DynamicForward", "127.0.0.1:1080"),
+        ] {
+            assert!(validate_forward(kind, value).is_ok(), "{kind} {value}");
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_forwards() {
+        for (kind, value) in [
+            // Command-line -L syntax: OpenSSH reports "Missing target argument"
+            ("LocalForward", "8080:localhost:80"),
+            ("LocalForward", "8080"),
+            ("LocalForward", "8080 localhost"),
+            ("LocalForward", "99999 localhost:80"),
+            ("DynamicForward", "1080 localhost:80"),
+            ("DynamicForward", "socks"),
+            ("RemoteForward", "a b c"),
+        ] {
+            assert!(validate_forward(kind, value).is_err(), "{kind} {value}");
+        }
+    }
 }

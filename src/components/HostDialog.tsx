@@ -6,14 +6,11 @@ import {
   Button,
   TextField,
   Grid,
-  FormControlLabel,
-  Switch,
   MenuItem,
   Box,
   Typography,
   Tabs,
   Tab,
-  Divider,
   Autocomplete,
 } from '@mui/material'
 import { useState, useEffect } from 'react'
@@ -23,6 +20,12 @@ import type { HostEntry } from '../api/tauri'
 import { useToast } from '../contexts/ToastContext'
 import { FONT_MONO } from '../theme'
 import { scanSshKeys } from '../api/tauri'
+import HostAdvancedOptions, {
+  advancedFromHost,
+  advancedToEntry,
+  validateAdvanced,
+  type AdvancedState,
+} from './HostAdvancedOptions'
 
 interface HostDialogProps {
   open: boolean
@@ -53,6 +56,9 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
   const [socks5Port, setSocks5Port] = useState('1080')
   const { t } = useTranslation()
   const toast = useToast()
+  const [advanced, setAdvanced] = useState<AdvancedState>(() => advancedFromHost())
+  const [showAdvancedErrors, setShowAdvancedErrors] = useState(false)
+  const advancedErrors = validateAdvanced(advanced, t)
 
   // Fetch SSH keys for certificate dropdown
   const { data: sshKeys } = useQuery({
@@ -69,22 +75,14 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
     identity_file: '',
     proxy_jump: '',
     proxy_command: '',
-    forward_agent: undefined,
-    strict_host_key_checking: undefined,
-    server_alive_interval: undefined,
-    server_alive_count_max: undefined,
-    compression: undefined,
-    connection_attempts: undefined,
-    connect_timeout: undefined,
-    local_forward: '',
-    remote_forward: '',
-    dynamic_forward: '',
-    pubkey_accepted_key_types: '',
-    host_key_algorithms: '',
-    extra_options: {},
   })
 
   useEffect(() => {
+    if (open) {
+      setTabValue(0)
+      setAdvanced(advancedFromHost(host))
+      setShowAdvancedErrors(false)
+    }
     if (host) {
       setFormData({
         ...host,
@@ -115,19 +113,6 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
         identity_file: '',
         proxy_jump: '',
         proxy_command: '',
-        forward_agent: undefined,
-        strict_host_key_checking: undefined,
-        server_alive_interval: undefined,
-        server_alive_count_max: undefined,
-        compression: undefined,
-        connection_attempts: undefined,
-        connect_timeout: undefined,
-        local_forward: '',
-        remote_forward: '',
-        dynamic_forward: '',
-        pubkey_accepted_key_types: '',
-        host_key_algorithms: '',
-        extra_options: {},
       })
       setProxyType('none')
       setSocks5Host('')
@@ -144,13 +129,7 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
   }
 
   const handleIdentityFileChange = (value: string | null) => {
-    setFormData((prev) => ({
-      ...prev,
-      identity_file: value || '',
-      // Auto-fill SSH algorithm configurations when certificate is selected
-      pubkey_accepted_key_types: value ? '+ssh-rsa' : '',
-      host_key_algorithms: value ? '+ssh-rsa' : '',
-    }))
+    setFormData((prev) => ({ ...prev, identity_file: value || '' }))
   }
 
   const handleProxyTypeChange = (type: 'none' | 'jump' | 'socks5' | 'custom') => {
@@ -202,6 +181,13 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
       return
     }
 
+    if (Object.keys(advancedErrors).length > 0) {
+      setShowAdvancedErrors(true)
+      setTabValue(2)
+      toast(t('hostDialog.adv.fixErrors'), 'error')
+      return
+    }
+
     // 清理空字符串和默认值，转换为 null（而非 undefined），这样后端 Option<T> 会是 None
     const cleanedData: HostEntry = {
       host: trimmedHost,
@@ -211,19 +197,7 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
       identity_file: formData.identity_file?.trim() || undefined,
       proxy_jump: formData.proxy_jump?.trim() || undefined,
       proxy_command: formData.proxy_command?.trim() || undefined,
-      forward_agent: formData.forward_agent, // 保持原值，如果是 undefined 就是 undefined
-      strict_host_key_checking: formData.strict_host_key_checking?.trim() || undefined,
-      server_alive_interval: formData.server_alive_interval === 0 ? undefined : formData.server_alive_interval,
-      server_alive_count_max: formData.server_alive_count_max,
-      compression: formData.compression,
-      connection_attempts: formData.connection_attempts,
-      connect_timeout: formData.connect_timeout,
-      local_forward: formData.local_forward?.trim() || undefined,
-      remote_forward: formData.remote_forward?.trim() || undefined,
-      dynamic_forward: formData.dynamic_forward?.trim() || undefined,
-      pubkey_accepted_key_types: formData.pubkey_accepted_key_types?.trim() || undefined,
-      host_key_algorithms: formData.host_key_algorithms?.trim() || undefined,
-      extra_options: formData.extra_options,
+      ...advancedToEntry(advanced),
     }
 
     try {
@@ -441,82 +415,11 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label={t('hostDialog.fieldStrictHostKeyChecking')}
-                value={formData.strict_host_key_checking || 'ask'}
-                onChange={(e) => handleChange('strict_host_key_checking', e.target.value)}
-              >
-                <MenuItem value="yes">{t('hostDialog.strictHostKeyCheckingYes')}</MenuItem>
-                <MenuItem value="no">{t('hostDialog.strictHostKeyCheckingNo')}</MenuItem>
-                <MenuItem value="ask">{t('hostDialog.strictHostKeyCheckingAsk')}</MenuItem>
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label={t('hostDialog.fieldServerAliveInterval')}
-                value={formData.server_alive_interval || 0}
-                onChange={(e) => handleChange('server_alive_interval', parseInt(e.target.value))}
-                helperText={t('hostDialog.fieldServerAliveIntervalHelper')}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.forward_agent || false}
-                    onChange={(e) => handleChange('forward_agent', e.target.checked)}
-                  />
-                }
-                label={t('hostDialog.fieldForwardAgent')}
-                sx={{ mt: 0.5 }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Divider sx={{ my: 0.5 }} />
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
-                {t('hostDialog.additionalOptions')}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label={t('hostDialog.fieldLocalForward')}
-                value={formData.local_forward || ''}
-                onChange={(e) => handleChange('local_forward', e.target.value)}
-                helperText={t('hostDialog.fieldLocalForwardHelper')}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label={t('hostDialog.fieldRemoteForward')}
-                value={formData.remote_forward || ''}
-                onChange={(e) => handleChange('remote_forward', e.target.value)}
-                helperText={t('hostDialog.fieldRemoteForwardHelper')}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label={t('hostDialog.fieldDynamicForward')}
-                value={formData.dynamic_forward || ''}
-                onChange={(e) => handleChange('dynamic_forward', e.target.value)}
-                helperText={t('hostDialog.fieldDynamicForwardHelper')}
-              />
-            </Grid>
-          </Grid>
+          <HostAdvancedOptions
+            value={advanced}
+            onChange={setAdvanced}
+            errors={showAdvancedErrors ? advancedErrors : {}}
+          />
         </TabPanel>
       </DialogContent>
       <DialogActions>
