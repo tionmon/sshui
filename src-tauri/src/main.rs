@@ -5,7 +5,7 @@
 mod commands;
 mod tray;
 
-use commands::{config, keys, backup, system, settings};
+use commands::{config, keys, backup, system, settings, hosts_file};
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
@@ -71,6 +71,12 @@ fn main() {
             system::open_config_dir,
             settings::load_settings,
             settings::save_settings,
+            hosts_file::load_hosts_state,
+            hosts_file::save_hosts_scheme,
+            hosts_file::delete_hosts_scheme,
+            hosts_file::apply_hosts_scheme,
+            hosts_file::save_system_hosts,
+            hosts_file::open_hosts_backup_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

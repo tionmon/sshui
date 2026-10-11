@@ -137,3 +137,39 @@ export const loadSettings = (): Promise<AppSettings> =>
 
 export const saveSettings = (settings: AppSettings): Promise<void> =>
   invoke('save_settings', { settings })
+
+// Hosts file operations
+export interface HostsScheme {
+  id: string
+  name: string
+  content: string
+  updated_at: number
+}
+
+export interface HostsState {
+  hosts_path: string
+  system_content: string
+  active_id: string | null
+  schemes: HostsScheme[]
+}
+
+/** Emitted by the backend when schemes or the hosts file change (e.g. from the tray). */
+export const HOSTS_STATE_CHANGED_EVENT = 'hosts-state-changed'
+
+export const loadHostsState = (): Promise<HostsState> =>
+  invoke('load_hosts_state')
+
+export const saveHostsScheme = (scheme: { id?: string; name: string; content: string }): Promise<HostsScheme> =>
+  invoke('save_hosts_scheme', { id: scheme.id ?? null, name: scheme.name, content: scheme.content })
+
+export const deleteHostsScheme = (id: string): Promise<void> =>
+  invoke('delete_hosts_scheme', { id })
+
+export const applyHostsScheme = (id: string): Promise<HostsState> =>
+  invoke('apply_hosts_scheme', { id })
+
+export const saveSystemHosts = (content: string): Promise<HostsState> =>
+  invoke('save_system_hosts', { content })
+
+export const openHostsBackupDir = (): Promise<void> =>
+  invoke('open_hosts_backup_dir')

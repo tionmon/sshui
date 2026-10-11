@@ -29,6 +29,13 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
   - Browse and restore previous configs
   - Delete old backups
 
+- **🗂️ Hosts File Management**
+  - Edit the system hosts file with syntax highlighting
+  - Save multiple hosts schemes (e.g. Development, Staging, Ad blocking)
+  - One-click switching from the app or the system tray menu
+  - Requests administrator rights only when needed (UAC / macOS prompt / pkexec)
+  - Automatic backup of the previous hosts file and DNS cache flush on every switch
+
 - **🌍 Multi-language Support**
   - English / 中文
   - Auto-detect system language

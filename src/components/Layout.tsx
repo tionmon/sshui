@@ -5,6 +5,7 @@ import {
   HistoryOutlined,
   SettingsOutlined,
   DataObjectOutlined,
+  LanOutlined,
   TerminalRounded,
   LightModeOutlined,
   DarkModeOutlined,
@@ -19,6 +20,7 @@ import KeysPage from '../pages/KeysPage'
 import BackupsPage from '../pages/BackupsPage'
 import SettingsPage from '../pages/SettingsPage'
 import ConfigEditorPage from '../pages/ConfigEditorPage'
+import HostsFilePage from '../pages/HostsFilePage'
 
 const sidebarWidth = 232
 
@@ -62,6 +64,7 @@ function Layout() {
     { text: t('menu.hosts'), icon: <DnsOutlined />, path: '/' },
     { text: t('menu.sshKeys'), icon: <VpnKeyOutlined />, path: '/keys' },
     { text: t('menu.configEditor'), icon: <DataObjectOutlined />, path: '/editor' },
+    { text: t('menu.hostsFile'), icon: <LanOutlined />, path: '/hosts-file' },
     { text: t('menu.backups'), icon: <HistoryOutlined />, path: '/backups' },
   ]
 
@@ -155,6 +158,7 @@ function Layout() {
             <Route path="/" element={<HostsPage />} />
             <Route path="/keys" element={<KeysPage />} />
             <Route path="/editor" element={<ConfigEditorPage />} />
+            <Route path="/hosts-file" element={<HostsFilePage />} />
             <Route path="/backups" element={<BackupsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

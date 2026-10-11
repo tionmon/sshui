@@ -3,3 +3,4 @@ pub mod keys;
 pub mod backup;
 pub mod system;
 pub mod settings;
+pub mod hosts_file;

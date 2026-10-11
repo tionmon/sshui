@@ -10,7 +10,12 @@ pub async fn open_config_dir() -> Result<(), String> {
         std::fs::create_dir_all(&ssh_at_dir).map_err(|e| e.to_string())?;
     }
 
-    let path_str = ssh_at_dir.to_str().ok_or("Invalid path")?;
+    open_path(&ssh_at_dir)
+}
+
+/// Open a directory in the platform file manager.
+pub fn open_path(path: &std::path::Path) -> Result<(), String> {
+    let path_str = path.to_str().ok_or("Invalid path")?;
 
     #[cfg(target_os = "macos")]
     {

@@ -1,20 +1,96 @@
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{CheckMenuItem, IsMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, Runtime, AppHandle,
+    Emitter, Manager, AppHandle,
 };
+use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+
+use crate::commands::hosts_file;
+
+const TRAY_ID: &str = "main";
+const SCHEME_PREFIX: &str = "hosts-scheme:";
 
 #[cfg(target_os = "macos")]
 use objc2_app_kit::NSApplication;
 #[cfg(target_os = "macos")]
 use objc2_foundation::MainThreadMarker;
 
-pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
+/// Build the tray menu, including a "Hosts schemes" submenu for one-click switching.
+fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let show_i = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
     let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
 
-    let menu = Menu::with_items(app, &[&show_i, &hide_i, &quit_i])?;
+    let state = hosts_file::load_state().ok();
+    let mut scheme_items: Vec<Box<dyn IsMenuItem<tauri::Wry>>> = Vec::new();
+    match &state {
+        Some(state) if !state.schemes.is_empty() => {
+            for scheme in &state.schemes {
+                let active = state.active_id.as_deref() == Some(scheme.id.as_str());
+                scheme_items.push(Box::new(CheckMenuItem::with_id(
+                    app,
+                    format!("{}{}", SCHEME_PREFIX, scheme.id),
+                    &scheme.name,
+                    true,
+                    active,
+                    None::<&str>,
+                )?));
+            }
+        }
+        _ => scheme_items.push(Box::new(MenuItem::with_id(
+            app,
+            "hosts-none",
+            "No schemes",
+            false,
+            None::<&str>,
+        )?)),
+    }
+    let scheme_refs: Vec<&dyn IsMenuItem<tauri::Wry>> = scheme_items.iter().map(|i| i.as_ref()).collect();
+    let hosts_menu = Submenu::with_items(app, "Hosts schemes", true, &scheme_refs)?;
+
+    Menu::with_items(
+        app,
+        &[
+            &show_i,
+            &hide_i,
+            &PredefinedMenuItem::separator(app)?,
+            &hosts_menu,
+            &PredefinedMenuItem::separator(app)?,
+            &quit_i,
+        ],
+    )
+}
+
+/// Rebuild the tray menu after schemes or the active scheme change.
+pub fn refresh_menu(app: &AppHandle) {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        match build_menu(app) {
+            Ok(menu) => {
+                let _ = tray.set_menu(Some(menu));
+            }
+            Err(e) => eprintln!("[TRAY] Failed to rebuild menu: {}", e),
+        }
+    }
+}
+
+fn apply_scheme_from_tray(app: &AppHandle, id: String) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let result = hosts_file::apply_scheme(id).await;
+        refresh_menu(&app);
+        let _ = app.emit(hosts_file::STATE_CHANGED_EVENT, ());
+        if let Err(e) = result {
+            app.dialog()
+                .message(e)
+                .title("SSHUI")
+                .kind(MessageDialogKind::Error)
+                .show(|_| {});
+        }
+    });
+}
+
+pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
+    let menu = build_menu(app)?;
 
     // Load and decode icon from embedded bytes - use icon.png for consistency with Dock icon
     let icon_bytes = include_bytes!("../icons/icon.png");
@@ -25,10 +101,13 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     let raw_pixels = rgba.into_raw();
     let icon = tauri::image::Image::new(&raw_pixels, width, height);
 
-    let _tray = TrayIconBuilder::new()
+    let _tray = TrayIconBuilder::with_id(TRAY_ID)
         .icon(icon)
         .menu(&menu)
         .on_menu_event(move |app, event| match event.id.as_ref() {
+            id if id.starts_with(SCHEME_PREFIX) => {
+                apply_scheme_from_tray(app, id[SCHEME_PREFIX.len()..].to_string());
+            }
             "quit" => {
                 eprintln!("[TRAY] Quit menu item clicked");
                 app.exit(0);
