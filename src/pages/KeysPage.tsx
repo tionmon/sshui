@@ -1,32 +1,50 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Box, Button, Chip, IconButton, Paper, Skeleton, Tooltip, Typography } from '@mui/material'
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Grid,
-  IconButton,
-  Typography,
-  Chip,
-  Tooltip,
-} from '@mui/material'
-import { Add, Refresh, Fingerprint, Lock, LockOpen, Delete } from '@mui/icons-material'
-import { scanSshKeys, generateSshKey, deleteSshKey, readPublicKey, loadSettings, type KeyInfo } from '../api/tauri'
+  Add,
+  Refresh,
+  Fingerprint,
+  LockOutlined,
+  LockOpenOutlined,
+  DeleteOutline,
+  ContentCopy,
+  VpnKeyOutlined,
+} from '@mui/icons-material'
+import { scanSshKeys, generateSshKey, deleteSshKey, readPublicKey, type KeyInfo } from '../api/tauri'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import GenerateKeyDialog from '../components/GenerateKeyDialog'
-import { ask } from '@tauri-apps/plugin-dialog'
+import PageHeader from '../components/PageHeader'
+import EmptyState from '../components/EmptyState'
+import { useToast, errorMessage } from '../contexts/ToastContext'
+import { confirmAction } from '../lib/confirm'
+import { FONT_MONO } from '../theme'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
+
+const keyTypeColor = (keyType: string) => {
+  switch (keyType) {
+    case 'Ed25519':
+      return 'success'
+    case 'ECDSA':
+      return 'info'
+    case 'DSA':
+      return 'warning'
+    default:
+      return 'default'
+  }
+}
+
+const fileName = (path: string) => path.split(/[\\/]/).pop() || path
 
 function KeysPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const queryClient = useQueryClient()
+  const toast = useToast()
   const { t } = useTranslation()
 
-  const { data: keys, isLoading, refetch } = useQuery({
+  const { data: keys, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['sshKeys'],
     queryFn: scanSshKeys,
-    enabled: true, // Re-enabled after fixing stack overflow
   })
 
   const generateMutation = useMutation({
@@ -35,11 +53,10 @@ function KeysPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sshKeys'] })
       setDialogOpen(false)
-      alert(t('keys.generateSuccess'))
+      toast(t('keys.generateSuccess'))
     },
-    onError: (error: any) => {
-      const errorMsg = error?.message || error?.toString() || 'Unknown error'
-      alert(t('keys.generateFailed') + ': ' + errorMsg)
+    onError: (error) => {
+      toast(`${t('keys.generateFailed')} ${errorMessage(error)}`, 'error')
     },
   })
 
@@ -48,30 +65,16 @@ function KeysPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sshKeys'] })
     },
-    onError: (error: any) => {
-      const errorMsg = error?.message || error?.toString() || 'Unknown error'
-      alert(`${t('keys.deleteFailed')}: ${errorMsg}`)
-    },
   })
 
   const handleDelete = async (key: KeyInfo) => {
     try {
-      const settings = await loadSettings()
-
-      if (settings.confirm_delete) {
-        const confirmed = await ask(t('keys.deleteConfirm', { keyName: key.path }), {
-          title: t('keys.deleteConfirmTitle'),
-          kind: 'warning',
-        })
-
-        if (!confirmed) {
-          return
-        }
-      }
-
+      const confirmed = await confirmAction(t('keys.deleteConfirm', { keyName: key.path }), t('keys.deleteConfirmTitle'))
+      if (!confirmed) return
       await deleteMutation.mutateAsync(key.path)
+      toast(t('keys.deleted'))
     } catch (error) {
-      console.error('[KeysPage] Delete failed:', error)
+      toast(`${t('keys.deleteFailed')}: ${errorMessage(error)}`, 'error')
     }
   }
 
@@ -79,11 +82,9 @@ function KeysPage() {
     try {
       const publicKeyContent = await readPublicKey(key.path)
       await writeText(publicKeyContent)
-      // TODO: 可以添加成功提示 snackbar
+      toast(t('keys.copied'))
     } catch (error) {
-      console.error('[KeysPage] Copy public key failed:', error)
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      alert(`${t('keys.copyFailed')}: ${errorMsg}`)
+      toast(`${t('keys.copyFailed')}: ${errorMessage(error)}`, 'error')
     }
   }
 
@@ -91,146 +92,135 @@ function KeysPage() {
     await generateMutation.mutateAsync({ keyType, name, comment, passphrase, bits })
   }
 
-  const getKeyTypeColor = (keyType: string) => {
-    switch (keyType) {
-      case 'Ed25519':
-        return 'success'
-      case 'RSA':
-        return 'primary'
-      case 'ECDSA':
-        return 'info'
-      default:
-        return 'default'
-    }
-  }
-
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">{t('keys.title')}</Typography>
-        <Box>
-          <Button
-            startIcon={<Refresh />}
-            onClick={() => refetch()}
-            sx={{ mr: 1 }}
-          >
-            {t('keys.refresh')}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setDialogOpen(true)}
-          >
-            {t('keys.generateKey')}
-          </Button>
-        </Box>
-      </Box>
-
-      <GenerateKeyDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onGenerate={handleGenerate}
+      <PageHeader
+        title={t('keys.title')}
+        description={t('keys.subtitle')}
+        meta={keys && <Chip label={keys.length} />}
+        actions={
+          <>
+            <Button startIcon={<Refresh />} onClick={() => refetch()} disabled={isFetching}>
+              {t('keys.refresh')}
+            </Button>
+            <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}>
+              {t('keys.generateKey')}
+            </Button>
+          </>
+        }
       />
 
-      {isLoading ? (
-        <Typography>{t('keys.loading')}</Typography>
-      ) : keys && keys.length > 0 ? (
-        <Grid container spacing={2}>
-          {keys.map((key: KeyInfo) => (
-            <Grid item xs={12} key={key.path}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography variant="h6" component="div">
-                          {key.path.split('/').pop()}
-                        </Typography>
-                        <Chip
-                          label={key.key_type}
-                          size="small"
-                          color={getKeyTypeColor(key.key_type)}
-                        />
-                        {key.is_encrypted ? (
-                          <Chip
-                            icon={<Lock />}
-                            label={t('keys.encrypted')}
-                            size="small"
-                            color="warning"
-                          />
-                        ) : (
-                          <Chip
-                            icon={<LockOpen />}
-                            label={t('keys.unencrypted')}
-                            size="small"
-                          />
-                        )}
-                        {key.size && (
-                          <Chip label={`${key.size} ${t('keys.bits')}`} size="small" variant="outlined" />
-                        )}
-                      </Box>
+      <GenerateKeyDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onGenerate={handleGenerate} />
 
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {key.path}
-                      </Typography>
+      <Paper variant="outlined" sx={(theme) => ({ boxShadow: `0 1px 2px rgba(0,0,0,.05), ${theme.tokens.edge}`, overflow: 'hidden' })}>
+        {isLoading ? (
+          [0, 1].map((i) => (
+            <Box key={i} sx={{ display: 'flex', gap: 2, p: 2.5, borderTop: i ? 1 : 0, borderColor: 'divider' }}>
+              <Skeleton variant="rounded" width={36} height={36} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton width={160} height={18} />
+                <Skeleton width={280} height={14} sx={{ mt: 1 }} />
+              </Box>
+            </Box>
+          ))
+        ) : keys && keys.length > 0 ? (
+          keys.map((key, index) => (
+            <Box
+              key={key.path}
+              sx={(theme) => ({
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 2,
+                px: 2.5,
+                py: 2,
+                borderTop: index ? `1px solid ${theme.tokens.border}` : 0,
+                transition: 'background-color .1s',
+                '&:hover': { bgcolor: theme.tokens.accent },
+              })}
+            >
+              <Box
+                sx={(theme) => ({
+                  width: 36,
+                  height: 36,
+                  flexShrink: 0,
+                  borderRadius: '10px',
+                  border: `1px solid ${theme.tokens.border}`,
+                  bgcolor: theme.tokens.muted,
+                  color: 'text.secondary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                })}
+              >
+                <VpnKeyOutlined sx={{ fontSize: 18 }} />
+              </Box>
 
-                      {key.comment && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {t('keys.comment')}: {key.comment}
-                        </Typography>
-                      )}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                  <Typography variant="subtitle1" sx={{ mr: 0.5 }}>
+                    {fileName(key.path)}
+                  </Typography>
+                  <Chip label={key.key_type} color={keyTypeColor(key.key_type)} />
+                  {key.size && <Chip label={`${key.size} ${t('keys.bits')}`} variant="outlined" />}
+                  {key.is_encrypted ? (
+                    <Chip icon={<LockOutlined />} label={t('keys.encrypted')} color="success" />
+                  ) : (
+                    <Chip icon={<LockOpenOutlined />} label={t('keys.unencrypted')} variant="outlined" />
+                  )}
+                </Box>
 
-                      {key.fingerprint && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Fingerprint fontSize="small" color="action" />
-                          <Typography
-                            variant="body2"
-                            fontFamily="monospace"
-                            color="text.secondary"
-                          >
-                            {key.fingerprint}
-                          </Typography>
-                        </Box>
-                      )}
+                <Typography variant="body2" color="text.secondary" noWrap sx={{ mt: 0.5, fontFamily: FONT_MONO, fontSize: '0.75rem' }}>
+                  {key.path}
+                </Typography>
 
-                      {key.created && (
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                          {t('keys.created')}: {new Date(key.created).toLocaleString()}
-                        </Typography>
-                      )}
-                    </Box>
-
-                    <Box>
-                      <Tooltip title={t('keys.copyToClipboard')}>
-                        <IconButton size="small" onClick={() => handleCopyPublicKey(key)}>
-                          <Fingerprint />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('common.delete')}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDelete(key)}
-                          color="error"
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
+                {key.fingerprint && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1 }}>
+                    <Fingerprint sx={{ fontSize: 14, color: 'text.secondary' }} />
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontFamily: FONT_MONO, fontSize: '0.75rem', wordBreak: 'break-all' }}
+                    >
+                      {key.fingerprint}
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" align="center">
-              {t('keys.noKeysFound')}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
+                )}
+
+                {(key.comment || key.created) && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
+                    {key.comment && `${t('keys.comment')}: ${key.comment}`}
+                    {key.comment && key.created && ' · '}
+                    {key.created && `${t('keys.created')}: ${new Date(key.created).toLocaleString()}`}
+                  </Typography>
+                )}
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+                <Tooltip title={t('keys.copyToClipboard')}>
+                  <IconButton size="small" onClick={() => handleCopyPublicKey(key)}>
+                    <ContentCopy />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('common.delete')}>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(key)}>
+                    <DeleteOutline />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+          ))
+        ) : (
+          <EmptyState
+            icon={<VpnKeyOutlined />}
+            title={t('keys.noKeysFound')}
+            action={
+              <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}>
+                {t('keys.generateKey')}
+              </Button>
+            }
+          />
+        )}
+      </Paper>
     </Box>
   )
 }

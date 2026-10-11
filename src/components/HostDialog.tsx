@@ -20,6 +20,8 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import type { HostEntry } from '../api/tauri'
+import { useToast } from '../contexts/ToastContext'
+import { FONT_MONO } from '../theme'
 import { scanSshKeys } from '../api/tauri'
 
 interface HostDialogProps {
@@ -50,6 +52,7 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
   const [socks5Host, setSocks5Host] = useState('')
   const [socks5Port, setSocks5Port] = useState('1080')
   const { t } = useTranslation()
+  const toast = useToast()
 
   // Fetch SSH keys for certificate dropdown
   const { data: sshKeys } = useQuery({
@@ -134,7 +137,6 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
 
   const handleChange = (field: keyof HostEntry, value: any) => {
     if (field === 'host') {
-      console.log('[HostDialog] Host field change - original value:', value)
       // 过滤空格字符
       value = value.replace(/\s+/g, '')
     }
@@ -180,25 +182,23 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
   }, [socks5Host, socks5Port])
 
   const handleSubmit = async () => {
-    console.log('[HostDialog] handleSubmit - formData.host:', formData.host)
-
     // Validate required fields
     const trimmedHost = formData.host.trim()
     const trimmedHostname = formData.hostname?.trim()
     const trimmedUser = formData.user?.trim()
 
     if (!trimmedHost) {
-      alert(t('hostDialog.errorHostRequired') || 'Host name is required')
+      toast(t('hostDialog.errorHostRequired'), 'error')
       return
     }
 
     if (!trimmedHostname) {
-      alert(t('hostDialog.errorHostnameRequired') || 'HostName (IP/Domain) is required')
+      toast(t('hostDialog.errorHostnameRequired'), 'error')
       return
     }
 
     if (!trimmedUser) {
-      alert(t('hostDialog.errorUserRequired') || 'User is required')
+      toast(t('hostDialog.errorUserRequired'), 'error')
       return
     }
 
@@ -243,15 +243,20 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
       } catch {
         // JSON 解析失败，直接显示原始错误
       }
-      alert(`${t('validation.saveFailed')}: ${errorMessage}`)
+      toast(`${t('validation.saveFailed')}: ${errorMessage}`, 'error')
     }
   }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{host ? t('hostDialog.titleEdit') : t('hostDialog.titleAdd')}</DialogTitle>
+      <DialogTitle>
+        {host ? t('hostDialog.titleEdit') : t('hostDialog.titleAdd')}
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {host ? t('hostDialog.subtitleEdit') : t('hostDialog.subtitleAdd')}
+        </Typography>
+      </DialogTitle>
       <DialogContent>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ mt: 1 }}>
           <Tab label={t('hostDialog.tabBasic')} />
           <Tab label={t('hostDialog.tabProxy')} />
           <Tab label={t('hostDialog.tabAdvanced')} />
@@ -266,7 +271,7 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
                 label={t('hostDialog.fieldHost')}
                 value={formData.host}
                 onChange={(e) => handleChange('host', e.target.value)}
-                helperText={t('hostDialog.fieldHostHelper') + ' (空格会被自动移除)'}
+                helperText={t('hostDialog.fieldHostHelper')}
                 inputProps={{
                   autoCapitalize: 'none',
                   autoCorrect: 'off',
@@ -399,11 +404,19 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <Box sx={{ bgcolor: 'background.default', p: 2, borderRadius: 1 }}>
+                  <Box
+                    sx={(theme) => ({
+                      bgcolor: theme.tokens.surface,
+                      border: `1px solid ${theme.tokens.border}`,
+                      px: 1.5,
+                      py: 1.25,
+                      borderRadius: '10px',
+                    })}
+                  >
                     <Typography variant="caption" color="text.secondary">
-                      {t('hostDialog.generatedProxyCommand')}:
+                      {t('hostDialog.generatedProxyCommand')}
                     </Typography>
-                    <Typography variant="body2" fontFamily="monospace" sx={{ mt: 0.5 }}>
+                    <Typography variant="body2" sx={{ mt: 0.5, fontFamily: FONT_MONO, fontSize: '0.8125rem' }}>
                       {formData.proxy_command || 'nc -x <host>:<port> %h %p'}
                     </Typography>
                   </Box>
@@ -463,12 +476,13 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
                   />
                 }
                 label={t('hostDialog.fieldForwardAgent')}
+                sx={{ mt: 0.5 }}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Divider sx={{ my: 0.5 }} />
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
                 {t('hostDialog.additionalOptions')}
               </Typography>
             </Grid>
@@ -506,7 +520,7 @@ function HostDialog({ open, host, onClose, onSave }: HostDialogProps) {
         </TabPanel>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t('hostDialog.cancel')}</Button>
+        <Button variant="text" onClick={onClose}>{t('hostDialog.cancel')}</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"

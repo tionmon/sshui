@@ -2,6 +2,7 @@ import { CssBaseline } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeContextProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './contexts/ToastContext'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient({
@@ -18,9 +19,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeContextProvider>
         <CssBaseline />
-        <BrowserRouter>
-          <Layout />
-        </BrowserRouter>
+        <ToastProvider>
+          <BrowserRouter>
+            <Layout />
+          </BrowserRouter>
+        </ToastProvider>
       </ThemeContextProvider>
     </QueryClientProvider>
   )

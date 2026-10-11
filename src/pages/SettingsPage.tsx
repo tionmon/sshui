@@ -1,42 +1,75 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Switch,
-  FormControlLabel,
-  Divider,
-  TextField,
-  Button,
-  RadioGroup,
-  Radio,
-  FormControl,
-  FormLabel,
-} from '@mui/material'
-import { useState, useEffect } from 'react'
+import { Box, Button, Paper, Switch, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { ContrastOutlined, DarkModeOutlined, LightModeOutlined, FolderOpenOutlined } from '@mui/icons-material'
+import { useState, useEffect, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import { getVersion } from '@tauri-apps/api/app'
 import { useThemeMode } from '../contexts/ThemeContext'
+import { useToast, errorMessage } from '../contexts/ToastContext'
+import PageHeader from '../components/PageHeader'
+import { FONT_MONO } from '../theme'
 import { openConfigDir, loadSettings, saveSettings, type AppSettings } from '../api/tauri'
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1, px: 0.25 }}>
+        {title}
+      </Typography>
+      <Paper
+        variant="outlined"
+        sx={(theme) => ({
+          overflow: 'hidden',
+          boxShadow: `0 1px 2px rgba(0,0,0,.05), ${theme.tokens.edge}`,
+          '& > * + *': { borderTop: `1px solid ${theme.tokens.border}` },
+        })}
+      >
+        {children}
+      </Paper>
+    </Box>
+  )
+}
+
+function Row({ label, description, control }: { label: ReactNode; description?: ReactNode; control?: ReactNode }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3, px: 2.5, py: 2 }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body1" fontWeight={500}>
+          {label}
+        </Typography>
+        {description && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            {description}
+          </Typography>
+        )}
+      </Box>
+      {control && <Box sx={{ flexShrink: 0 }}>{control}</Box>}
+    </Box>
+  )
+}
 
 function SettingsPage() {
   const [autoBackup, setAutoBackup] = useState(true)
   const [backupLimit, setBackupLimit] = useState(10)
   const [confirmDelete, setConfirmDelete] = useState(true)
   const { themeMode, setThemeMode } = useThemeMode()
+  const toast = useToast()
   const { t, i18n } = useTranslation()
 
-  // 加载设置
+  const { data: version } = useQuery({ queryKey: ['appVersion'], queryFn: getVersion, staleTime: Infinity })
+
   useEffect(() => {
-    loadSettings().then((settings) => {
-      setAutoBackup(settings.auto_backup)
-      setBackupLimit(settings.backup_limit)
-      setConfirmDelete(settings.confirm_delete)
-    }).catch((error) => {
-      console.error('Failed to load settings:', error)
-    })
+    loadSettings()
+      .then((settings) => {
+        setAutoBackup(settings.auto_backup)
+        setBackupLimit(settings.backup_limit)
+        setConfirmDelete(settings.confirm_delete)
+      })
+      .catch((error) => {
+        console.error('Failed to load settings:', error)
+      })
   }, [])
 
-  // 保存设置的通用函数
   const handleSaveSettings = async (updates: Partial<AppSettings>) => {
     const newSettings: AppSettings = {
       auto_backup: autoBackup,
@@ -48,149 +81,129 @@ function SettingsPage() {
     try {
       await saveSettings(newSettings)
     } catch (error) {
-      console.error('Failed to save settings:', error)
-      alert(`保存设置失败: ${error}`)
+      toast(`${t('settings.saveFailed')}: ${errorMessage(error)}`, 'error')
     }
   }
 
-  const handleLanguageChange = (lng: string) => {
-    i18n.changeLanguage(lng)
+  const handleOpenConfigDir = async () => {
+    try {
+      await openConfigDir()
+    } catch (error) {
+      toast(`${t('settings.openDirFailed')}: ${errorMessage(error)}`, 'error')
+    }
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        {t('settings.title')}
-      </Typography>
+    <Box sx={{ maxWidth: 760 }}>
+      <PageHeader title={t('settings.title')} description={t('settings.subtitle')} />
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {t('settings.appearance')}
-          </Typography>
-
-          <FormControl component="fieldset" sx={{ mb: 3 }}>
-            <FormLabel component="legend">{t('settings.themeMode')}</FormLabel>
-            <RadioGroup
+      <Section title={t('settings.appearance')}>
+        <Row
+          label={t('settings.themeMode')}
+          description={t('settings.themeModeHelp')}
+          control={
+            <ToggleButtonGroup
+              exclusive
               value={themeMode}
-              onChange={(e) => setThemeMode(e.target.value as 'light' | 'dark' | 'system')}
+              onChange={(_, value) => value && setThemeMode(value)}
             >
-              <FormControlLabel value="system" control={<Radio />} label={t('settings.themeSystem')} />
-              <FormControlLabel value="light" control={<Radio />} label={t('settings.themeLight')} />
-              <FormControlLabel value="dark" control={<Radio />} label={t('settings.themeDark')} />
-            </RadioGroup>
-          </FormControl>
-
-          <FormControl component="fieldset">
-            <FormLabel component="legend">{t('settings.language')}</FormLabel>
-            <RadioGroup
+              <ToggleButton value="system">
+                <ContrastOutlined />
+                {t('settings.themeSystem')}
+              </ToggleButton>
+              <ToggleButton value="light">
+                <LightModeOutlined />
+                {t('settings.themeLight')}
+              </ToggleButton>
+              <ToggleButton value="dark">
+                <DarkModeOutlined />
+                {t('settings.themeDark')}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          }
+        />
+        <Row
+          label={t('settings.language')}
+          description={t('settings.languageHelp')}
+          control={
+            <ToggleButtonGroup
+              exclusive
               value={i18n.language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
+              onChange={(_, value) => value && i18n.changeLanguage(value)}
             >
-              <FormControlLabel value="zh-CN" control={<Radio />} label={t('settings.languageChinese')} />
-              <FormControlLabel value="en-US" control={<Radio />} label={t('settings.languageEnglish')} />
-            </RadioGroup>
-          </FormControl>
-        </CardContent>
-      </Card>
+              <ToggleButton value="zh-CN">{t('settings.languageChinese')}</ToggleButton>
+              <ToggleButton value="en-US">{t('settings.languageEnglish')}</ToggleButton>
+            </ToggleButtonGroup>
+          }
+        />
+      </Section>
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {t('settings.backupSettings')}
-          </Typography>
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={autoBackup}
-                onChange={(e) => {
-                  const newValue = e.target.checked
-                  setAutoBackup(newValue)
-                  handleSaveSettings({ auto_backup: newValue })
-                }}
-              />
-            }
-            label={t('settings.autoBackup')}
-          />
-
-          <Box sx={{ mt: 2 }}>
+      <Section title={t('settings.backupSettings')}>
+        <Row
+          label={t('settings.autoBackup')}
+          description={t('settings.autoBackupHelp')}
+          control={
+            <Switch
+              checked={autoBackup}
+              onChange={(e) => {
+                const newValue = e.target.checked
+                setAutoBackup(newValue)
+                handleSaveSettings({ auto_backup: newValue })
+              }}
+            />
+          }
+        />
+        <Row
+          label={t('settings.maxBackups')}
+          description={t('settings.maxBackupsHelp')}
+          control={
             <TextField
               type="number"
-              label={t('settings.maxBackups')}
               value={backupLimit}
-              onChange={(e) => {
-                const newValue = parseInt(e.target.value)
-                setBackupLimit(newValue)
-              }}
-              onBlur={() => {
-                handleSaveSettings({ backup_limit: backupLimit })
-              }}
+              onChange={(e) => setBackupLimit(parseInt(e.target.value))}
+              onBlur={() => handleSaveSettings({ backup_limit: backupLimit })}
               inputProps={{ min: 1, max: 50 }}
-              helperText={t('settings.maxBackupsHelp')}
-              sx={{ width: 250 }}
+              sx={{ width: 88 }}
             />
-          </Box>
-        </CardContent>
-      </Card>
+          }
+        />
+      </Section>
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {t('settings.editorSettings')}
-          </Typography>
+      <Section title={t('settings.editorSettings')}>
+        <Row
+          label={t('settings.confirmDelete')}
+          description={t('settings.confirmDeleteHelp')}
+          control={
+            <Switch
+              checked={confirmDelete}
+              onChange={(e) => {
+                const newValue = e.target.checked
+                setConfirmDelete(newValue)
+                handleSaveSettings({ confirm_delete: newValue })
+              }}
+            />
+          }
+        />
+      </Section>
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={confirmDelete}
-                onChange={(e) => {
-                  const newValue = e.target.checked
-                  setConfirmDelete(newValue)
-                  handleSaveSettings({ confirm_delete: newValue })
-                }}
-              />
-            }
-            label={t('settings.confirmDelete')}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {t('settings.about')}
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {t('settings.aboutDescription')}
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {t('settings.version')}: 0.1.0
-          </Typography>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {t('settings.sshConfigLocation')}: ~/.ssh/config
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {t('settings.backupLocation')}: ~/.ssh-at/backups/
-          </Typography>
-
-          <Button variant="outlined" size="small" sx={{ mt: 1 }} onClick={async () => {
-            try {
-              await openConfigDir()
-            } catch (error) {
-              alert(`打开目录失败: ${error}`)
-            }
-          }}>
-            {t('settings.openConfigDir')}
-          </Button>
-        </CardContent>
-      </Card>
+      <Section title={t('settings.about')}>
+        <Row label={t('settings.aboutDescription')} description={`${t('settings.version')} ${version ?? '—'}`} />
+        <Row
+          label={t('settings.paths')}
+          description={
+            <Box component="span" sx={{ display: 'block', fontFamily: FONT_MONO, fontSize: '0.75rem', lineHeight: 1.8 }}>
+              {t('settings.sshConfigLocation')}: ~/.ssh/config
+              <br />
+              {t('settings.backupLocation')}: ~/.ssh-at/backups/
+            </Box>
+          }
+          control={
+            <Button size="small" startIcon={<FolderOpenOutlined />} onClick={handleOpenConfigDir}>
+              {t('settings.openConfigDir')}
+            </Button>
+          }
+        />
+      </Section>
     </Box>
   )
 }

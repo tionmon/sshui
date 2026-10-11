@@ -11,6 +11,7 @@ import {
   Select,
   FormHelperText,
   Box,
+  Typography,
 } from '@mui/material'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -36,9 +37,13 @@ function GenerateKeyDialog({ open, onClose, onGenerate }: GenerateKeyDialogProps
     setLoading(true)
     try {
       await onGenerate(keyType, name, comment || undefined, passphrase || undefined, keyType === 'RSA' ? parseInt(bits) : undefined)
-      // Parent component will close dialog via onClose in mutation's onSuccess
+      // Parent closes the dialog in the mutation's onSuccess; reset for next time
+      setName('')
+      setComment('')
+      setPassphrase('')
     } catch (error) {
       console.error('Failed to generate key:', error)
+    } finally {
       setLoading(false)
     }
   }
@@ -54,9 +59,14 @@ function GenerateKeyDialog({ open, onClose, onGenerate }: GenerateKeyDialogProps
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('generateKeyDialog.title')}</DialogTitle>
+      <DialogTitle>
+        {t('generateKeyDialog.title')}
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {t('generateKeyDialog.subtitle')}
+        </Typography>
+      </DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25, mt: 1 }}>
           <FormControl fullWidth>
             <InputLabel>{t('generateKeyDialog.fieldKeyType')}</InputLabel>
             <Select
@@ -121,7 +131,7 @@ function GenerateKeyDialog({ open, onClose, onGenerate }: GenerateKeyDialogProps
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
+        <Button variant="text" onClick={handleClose} disabled={loading}>
           {t('generateKeyDialog.cancel')}
         </Button>
         <Button

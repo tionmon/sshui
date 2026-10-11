@@ -1,10 +1,12 @@
-# SSH-AT
+# SSHUI
 
 [English](./README.md)
 
+> SSHUI 派生自 [baerwang/ssh-at](https://github.com/baerwang/ssh-at)（Apache-2.0），独立维护并重新设计了界面。视觉风格参考 [Storage UI](https://github.com/hahahumble/storageui)。
+
 ## 概述
 
-**SSH-AT** 是一个 SSH 密钥、主机和配置管理的桌面工具。生成密钥、可视化编辑 `~/.ssh/config`、自动备份——都在一个应用里。
+**SSHUI** 是一个 SSH 密钥、主机和配置管理的桌面工具。生成密钥、可视化编辑 `~/.ssh/config`、自动备份——都在一个应用里。
 
 基于 Tauri 2、React 和 Rust 构建的跨平台原生应用。
 
@@ -32,12 +34,14 @@
   - 自动检测系统语言
 
 - **🎨 现代化界面**
-  - Material Design（MUI）
-  - 明暗主题切换
+  - 基于 MUI 的简洁中性设计系统（Geist 字体、细边框、柔和状态徽章）
+  - 浅色 / 深色 / 跟随系统主题，可在侧边栏一键切换
   - 系统托盘集成（最小化到托盘，不退出）
   - macOS Dock 图标在最小化时自动隐藏
 
 ## 界面截图
+
+_以下截图为界面重设计之前的版本，后续将更新。_
 
 ### 主机管理
 ![主机管理](./screenshots/hosts.png)
@@ -78,7 +82,7 @@
 
 ### 下载预编译版本
 
-前往 [Releases](https://github.com/baerwang/ssh-at/releases) 下载：
+前往 [Releases](https://github.com/tionmon/sshui/releases) 下载：
 
 - **macOS**：`.dmg`（Intel 和 Apple Silicon 通用二进制）
 - **Windows**：`.msi`
@@ -99,8 +103,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/baerwang/ssh-at.git
-cd ssh-at
+git clone https://github.com/tionmon/sshui.git
+cd sshui
 
 # 安装依赖
 pnpm install
@@ -113,14 +117,14 @@ pnpm tauri build
 ```
 
 构建产物：
-- macOS：`src-tauri/target/release/bundle/macos/SSH-AT.app` 和 `.dmg`
+- macOS：`src-tauri/target/release/bundle/macos/SSHUI.app` 和 `.dmg`
 - Windows：`src-tauri/target/release/bundle/msi/*.msi`
 - Linux：`src-tauri/target/release/bundle/appimage/*.AppImage` 和 `.deb`
 
 ## 使用方法
 
 1. **启动应用**
-   - macOS：将 `SSH-AT.app` 拖到 `/Applications` 并启动
+   - macOS：将 `SSHUI.app` 拖到 `/Applications` 并启动
    - Windows：运行 `.msi` 安装程序
    - Linux：将 `.AppImage` 设为可执行并运行，或安装 `.deb`
 

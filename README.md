@@ -1,10 +1,12 @@
-# SSH-AT
+# SSHUI
 
 [中文文档](./README-zh.md)
 
+> SSHUI is a fork of [baerwang/ssh-at](https://github.com/baerwang/ssh-at) (Apache-2.0), maintained independently with a redesigned interface. The visual style is inspired by [Storage UI](https://github.com/hahahumble/storageui).
+
 ## Overview
 
-**SSH-AT** is a desktop GUI tool for managing SSH keys, hosts, and configurations. Generate keys, edit `~/.ssh/config` visually, and keep automatic backups—all in one app.
+**SSHUI** is a desktop GUI tool for managing SSH keys, hosts, and configurations. Generate keys, edit `~/.ssh/config` visually, and keep automatic backups—all in one app.
 
 Built with Tauri 2, React, and Rust for a native cross-platform experience.
 
@@ -32,12 +34,14 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
   - Auto-detect system language
 
 - **🎨 Modern UI**
-  - Material Design with MUI
-  - Light/Dark theme toggle
+  - Clean neutral design system (Geist type, hairline borders, soft status badges) built on MUI
+  - Light / Dark / System theme, switchable from the sidebar
   - System tray integration (minimize to tray, not quit)
   - macOS Dock icon auto-hide when minimized
 
 ## Screenshots
+
+_Screenshots below predate the UI redesign and will be refreshed._
 
 ### Hosts Management
 ![Hosts Management](./screenshots/hosts.png)
@@ -78,7 +82,7 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
 
 ### Download Pre-built Binaries
 
-Go to [Releases](https://github.com/baerwang/ssh-at/releases) and download:
+Go to [Releases](https://github.com/tionmon/sshui/releases) and download:
 
 - **macOS**: `.dmg` (Universal binary for Intel & Apple Silicon)
 - **Windows**: `.msi`
@@ -99,8 +103,8 @@ Go to [Releases](https://github.com/baerwang/ssh-at/releases) and download:
 
 ```bash
 # Clone the repository
-git clone https://github.com/baerwang/ssh-at.git
-cd ssh-at
+git clone https://github.com/tionmon/sshui.git
+cd sshui
 
 # Install dependencies
 pnpm install
@@ -113,14 +117,14 @@ pnpm tauri build
 ```
 
 Build outputs:
-- macOS: `src-tauri/target/release/bundle/macos/SSH-AT.app` and `.dmg`
+- macOS: `src-tauri/target/release/bundle/macos/SSHUI.app` and `.dmg`
 - Windows: `src-tauri/target/release/bundle/msi/*.msi`
 - Linux: `src-tauri/target/release/bundle/appimage/*.AppImage` and `.deb`
 
 ## Usage
 
 1. **Launch the app**
-   - macOS: Drag `SSH-AT.app` to `/Applications` and launch
+   - macOS: Drag `SSHUI.app` to `/Applications` and launch
    - Windows: Run the `.msi` installer
    - Linux: Make `.AppImage` executable and run, or install `.deb`
 

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "SSH-AT",
+    "appName": "SSHUI",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -8,7 +8,13 @@
     "add": "Add",
     "search": "Search",
     "confirm": "Confirm",
-    "close": "Close"
+    "close": "Close",
+    "copied": "Copied to clipboard",
+    "retry": "Retry",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "toggleTheme": "Toggle theme"
   },
   "validation": {
     "saveFailed": "Save failed",
@@ -37,15 +43,16 @@
     "settings": "Settings",
     "trayShow": "Show",
     "trayHide": "Hide",
-    "trayQuit": "Quit"
+    "trayQuit": "Quit",
+    "groupManage": "Manage"
   },
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",
     "themeMode": "Theme Mode",
-    "themeSystem": "Follow System",
-    "themeLight": "Light Mode",
-    "themeDark": "Dark Mode",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
     "language": "Language",
     "languageChinese": "简体中文",
     "languageEnglish": "English",
@@ -56,11 +63,19 @@
     "editorSettings": "Editor Settings",
     "confirmDelete": "Confirm before deleting hosts",
     "about": "About",
-    "aboutDescription": "SSH-AT - SSH Configuration Management Tool",
+    "aboutDescription": "SSHUI — SSH configuration manager",
     "version": "Version",
     "sshConfigLocation": "SSH config location",
     "backupLocation": "Backup location",
-    "openConfigDir": "Open Config Directory"
+    "openConfigDir": "Open Config Directory",
+    "subtitle": "Appearance, backups and application preferences",
+    "saveFailed": "Failed to save settings",
+    "openDirFailed": "Failed to open directory",
+    "themeModeHelp": "Choose how SSHUI looks",
+    "languageHelp": "Interface language",
+    "confirmDeleteHelp": "Ask before deleting hosts, keys and backups or restoring a backup",
+    "autoBackupHelp": "Snapshot ~/.ssh/config before every change",
+    "paths": "Paths"
   },
   "hosts": {
     "title": "SSH Hosts",
@@ -78,7 +93,14 @@
     "noHostsConfigured": "No hosts configured",
     "deleteConfirm": "Delete host \"{{hostName}}\"?",
     "proxyJump": "ProxyJump",
-    "proxyCommand": "ProxyCommand"
+    "proxyCommand": "ProxyCommand",
+    "subtitle": "Entries from your ~/.ssh/config",
+    "count": "{{count}} hosts",
+    "deleteConfirmTitle": "Delete host",
+    "deleteFailed": "Failed to delete host",
+    "saved": "Host saved",
+    "deleted": "Host deleted",
+    "emptyHint": "Add a host to start managing your SSH config."
   },
   "keys": {
     "title": "SSH Keys",
@@ -97,7 +119,11 @@
     "deleteConfirm": "Delete key \"{{keyName}}\"?",
     "deleteConfirmTitle": "Confirm Delete",
     "deleteFailed": "Key deletion failed",
-    "copyFailed": "Failed to copy public key"
+    "copyFailed": "Failed to copy public key",
+    "subtitle": "Private keys found in ~/.ssh and ~/.ssh-at/creds",
+    "copied": "Public key copied to clipboard",
+    "deleted": "Key deleted",
+    "count": "{{count}} keys"
   },
   "config": {
     "title": "Config Editor",
@@ -107,7 +133,10 @@
     "loading": "Loading configuration...",
     "loadError": "Failed to load SSH config",
     "parseError": "Parse error",
-    "infoMessage": "Directly edit your SSH config file. Changes will be validated and backed up automatically."
+    "infoMessage": "Directly edit your SSH config file. Changes will be validated and backed up automatically.",
+    "subtitle": "Edit ~/.ssh/config directly",
+    "unsaved": "Unsaved changes",
+    "saved": "Configuration saved"
   },
   "backups": {
     "title": "Backups",
@@ -119,7 +148,16 @@
     "hash": "Hash",
     "restoreConfirm": "Restore this backup? Current config will be backed up first.",
     "deleteConfirm": "Delete this backup?",
-    "noBackupsFound": "No backups found. Backups will be created automatically when you save SSH config changes."
+    "noBackupsFound": "No backups found. Backups will be created automatically when you save SSH config changes.",
+    "subtitle": "Automatic snapshots of ~/.ssh/config",
+    "restoreConfirmTitle": "Restore backup",
+    "deleteConfirmTitle": "Delete backup",
+    "restoreConfirmOverwrite": "Restore this backup? This will overwrite the current SSH config.",
+    "restoreFailed": "Restore failed",
+    "deleteFailed": "Failed to delete backup",
+    "restored": "Backup restored",
+    "deleted": "Backup deleted",
+    "count": "{{count}} backups"
   },
   "hostDialog": {
     "titleEdit": "Edit Host",
@@ -128,7 +166,7 @@
     "tabProxy": "Proxy",
     "tabAdvanced": "Advanced",
     "fieldHost": "Host",
-    "fieldHostHelper": "Alias name for this host",
+    "fieldHostHelper": "Alias name for this host (spaces are removed automatically)",
     "fieldHostname": "Hostname",
     "fieldHostnameHelper": "IP address or domain name",
     "fieldPort": "Port",
@@ -166,7 +204,9 @@
     "errorHostnameRequired": "HostName (IP/Domain) is required",
     "errorUserRequired": "User is required",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "subtitleAdd": "Create a new entry in ~/.ssh/config",
+    "subtitleEdit": "Update this entry in ~/.ssh/config"
   },
   "generateKeyDialog": {
     "title": "Generate SSH Key",
@@ -188,6 +228,7 @@
     "fieldPassphraseHelper": "Optional passphrase to protect the key",
     "cancel": "Cancel",
     "generate": "Generate",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "subtitle": "Create a new key pair on this machine"
   }
 }

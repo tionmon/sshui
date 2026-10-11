@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "SSH-AT",
+    "appName": "SSHUI",
     "save": "保存",
     "cancel": "取消",
     "delete": "删除",
@@ -8,7 +8,13 @@
     "add": "添加",
     "search": "搜索",
     "confirm": "确认",
-    "close": "关闭"
+    "close": "关闭",
+    "copied": "已复制到剪贴板",
+    "retry": "重试",
+    "themeSystem": "跟随系统",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "toggleTheme": "切换主题"
   },
   "validation": {
     "saveFailed": "保存失败",
@@ -37,15 +43,16 @@
     "settings": "设置",
     "trayShow": "显示",
     "trayHide": "隐藏",
-    "trayQuit": "退出"
+    "trayQuit": "退出",
+    "groupManage": "管理"
   },
   "settings": {
     "title": "设置",
     "appearance": "外观",
     "themeMode": "主题模式",
     "themeSystem": "跟随系统",
-    "themeLight": "浅色模式",
-    "themeDark": "深色模式",
+    "themeLight": "浅色",
+    "themeDark": "深色",
     "language": "语言",
     "languageChinese": "简体中文",
     "languageEnglish": "English",
@@ -56,11 +63,19 @@
     "editorSettings": "编辑器设置",
     "confirmDelete": "删除主机前确认",
     "about": "关于",
-    "aboutDescription": "SSH-AT - SSH 配置管理工具",
+    "aboutDescription": "SSHUI — SSH 配置管理工具",
     "version": "版本",
     "sshConfigLocation": "SSH 配置文件位置",
     "backupLocation": "备份文件位置",
-    "openConfigDir": "打开配置目录"
+    "openConfigDir": "打开配置目录",
+    "subtitle": "外观、备份与应用偏好设置",
+    "saveFailed": "保存设置失败",
+    "openDirFailed": "打开目录失败",
+    "themeModeHelp": "选择 SSHUI 的外观",
+    "languageHelp": "界面语言",
+    "confirmDeleteHelp": "删除主机、密钥、备份或恢复备份前进行确认",
+    "autoBackupHelp": "每次修改前为 ~/.ssh/config 创建快照",
+    "paths": "路径"
   },
   "hosts": {
     "title": "SSH 主机",
@@ -78,7 +93,14 @@
     "noHostsConfigured": "未配置主机",
     "deleteConfirm": "确认删除主机 \"{{hostName}}\"？",
     "proxyJump": "跳板代理",
-    "proxyCommand": "命令代理"
+    "proxyCommand": "命令代理",
+    "subtitle": "来自 ~/.ssh/config 的主机条目",
+    "count": "{{count}} 个主机",
+    "deleteConfirmTitle": "删除主机",
+    "deleteFailed": "删除主机失败",
+    "saved": "主机已保存",
+    "deleted": "主机已删除",
+    "emptyHint": "添加一个主机以开始管理 SSH 配置。"
   },
   "keys": {
     "title": "SSH 密钥",
@@ -97,7 +119,11 @@
     "deleteConfirm": "确定要删除密钥 \"{{keyName}}\" 吗？",
     "deleteConfirmTitle": "确认删除",
     "deleteFailed": "密钥删除失败",
-    "copyFailed": "复制公钥失败"
+    "copyFailed": "复制公钥失败",
+    "subtitle": "在 ~/.ssh 与 ~/.ssh-at/creds 中找到的私钥",
+    "copied": "公钥已复制到剪贴板",
+    "deleted": "密钥已删除",
+    "count": "{{count}} 个密钥"
   },
   "config": {
     "title": "配置编辑器",
@@ -107,7 +133,10 @@
     "loading": "加载配置中...",
     "loadError": "加载 SSH 配置失败",
     "parseError": "解析错误",
-    "infoMessage": "直接编辑 SSH 配置文件。更改将自动验证并备份。"
+    "infoMessage": "直接编辑 SSH 配置文件。更改将自动验证并备份。",
+    "subtitle": "直接编辑 ~/.ssh/config",
+    "unsaved": "有未保存的更改",
+    "saved": "配置已保存"
   },
   "backups": {
     "title": "备份管理",
@@ -119,7 +148,16 @@
     "hash": "哈希",
     "restoreConfirm": "恢复此备份？当前配置将先被备份。",
     "deleteConfirm": "删除此备份？",
-    "noBackupsFound": "未找到备份。保存 SSH 配置更改时将自动创建备份。"
+    "noBackupsFound": "未找到备份。保存 SSH 配置更改时将自动创建备份。",
+    "subtitle": "~/.ssh/config 的自动快照",
+    "restoreConfirmTitle": "恢复备份",
+    "deleteConfirmTitle": "删除备份",
+    "restoreConfirmOverwrite": "确定要恢复此备份吗？这将覆盖当前的 SSH 配置。",
+    "restoreFailed": "恢复失败",
+    "deleteFailed": "删除备份失败",
+    "restored": "备份已恢复",
+    "deleted": "备份已删除",
+    "count": "{{count}} 个备份"
   },
   "hostDialog": {
     "titleEdit": "编辑主机",
@@ -128,7 +166,7 @@
     "tabProxy": "代理",
     "tabAdvanced": "高级",
     "fieldHost": "主机",
-    "fieldHostHelper": "此主机的别名",
+    "fieldHostHelper": "该主机的别名（空格会被自动移除）",
     "fieldHostname": "主机名",
     "fieldHostnameHelper": "IP 地址或域名",
     "fieldPort": "端口",
@@ -166,7 +204,9 @@
     "errorHostnameRequired": "主机地址（IP/域名）不能为空",
     "errorUserRequired": "用户名不能为空",
     "cancel": "取消",
-    "save": "保存"
+    "save": "保存",
+    "subtitleAdd": "在 ~/.ssh/config 中新建条目",
+    "subtitleEdit": "更新 ~/.ssh/config 中的此条目"
   },
   "generateKeyDialog": {
     "title": "生成 SSH 密钥",
@@ -188,6 +228,7 @@
     "fieldPassphraseHelper": "保护密钥的可选密码",
     "cancel": "取消",
     "generate": "生成",
-    "generating": "生成中..."
+    "generating": "生成中...",
+    "subtitle": "在本机生成新的密钥对"
   }
 }

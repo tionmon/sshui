@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
+import { ThemeProvider } from '@mui/material/styles'
+import { buildTheme } from '../theme'
 import { PaletteMode } from '@mui/material'
 
 type ThemeMode = 'light' | 'dark' | 'system'
@@ -66,104 +67,13 @@ export const ThemeContextProvider = ({ children }: ThemeContextProviderProps) =>
     }
   }
 
-  const theme = createTheme({
-    palette: {
-      mode,
-      primary: {
-        main: mode === 'dark' ? '#6366f1' : '#4f46e5',
-      },
-      secondary: {
-        main: mode === 'dark' ? '#ec4899' : '#db2777',
-      },
-      background: mode === 'dark' ? {
-        default: '#0f172a',
-        paper: '#1e293b',
-      } : {
-        default: '#f8fafc',
-        paper: '#ffffff',
-      },
-      text: mode === 'dark' ? {
-        primary: '#f1f5f9',
-        secondary: '#cbd5e1',
-      } : {
-        primary: '#0f172a',
-        secondary: '#475569',
-      },
-    },
-    typography: {
-      fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    },
-    components: {
-      MuiCssBaseline: {
-        styleOverrides: {
-          body: {
-            scrollbarWidth: 'thin',
-            '&::-webkit-scrollbar': {
-              width: '8px',
-              height: '8px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: mode === 'dark' ? '#475569' : '#cbd5e1',
-              borderRadius: '4px',
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: mode === 'dark' ? '#1e293b' : '#f1f5f9',
-            },
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            backgroundImage: 'none',
-            borderRadius: 12,
-          },
-        },
-      },
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            borderRadius: 8,
-            textTransform: 'none',
-            fontWeight: 500,
-          },
-          contained: {
-            boxShadow: 'none',
-            '&:hover': {
-              boxShadow: mode === 'dark'
-                ? '0 4px 12px rgba(99, 102, 241, 0.3)'
-                : '0 4px 12px rgba(79, 70, 229, 0.2)',
-            },
-          },
-        },
-      },
-      MuiTableRow: {
-        styleOverrides: {
-          root: {
-            '&:hover': {
-              backgroundColor: mode === 'dark' ? 'rgba(51, 65, 85, 0.8)' : 'rgba(241, 245, 249, 0.8)',
-            },
-          },
-        },
-      },
-      MuiTableCell: {
-        styleOverrides: {
-          root: {
-            borderBottom: mode === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
-          },
-        },
-      },
-      MuiAppBar: {
-        styleOverrides: {
-          root: {
-            boxShadow: mode === 'dark'
-              ? '0 1px 3px 0 rgb(0 0 0 / 0.1)'
-              : '0 1px 3px 0 rgb(0 0 0 / 0.05)',
-          },
-        },
-      },
-    },
-  })
+  const theme = useMemo(() => buildTheme(mode), [mode])
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.dataset.theme = mode
+    root.style.colorScheme = mode
+  }, [mode])
 
   return (
     <ThemeContext.Provider value={{ mode, themeMode, setThemeMode, toggleTheme }}>
