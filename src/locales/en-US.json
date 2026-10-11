@@ -14,7 +14,9 @@
     "themeSystem": "System",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "toggleTheme": "Toggle theme"
+    "toggleTheme": "Toggle theme",
+    "browserTitle": "Open SSHUI in the desktop app",
+    "browserBody": "This page needs the SSHUI backend, which only runs inside the desktop window. Close this browser tab and use the window that opens when you run:"
   },
   "validation": {
     "saveFailed": "Save failed",

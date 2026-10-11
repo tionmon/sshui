@@ -14,7 +14,9 @@
     "themeSystem": "跟随系统",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "toggleTheme": "切换主题"
+    "toggleTheme": "切换主题",
+    "browserTitle": "请在桌面应用中打开 SSHUI",
+    "browserBody": "此页面需要 SSHUI 后端，而后端只在桌面应用窗口中运行。请关闭此浏览器标签页，并使用运行以下命令后弹出的应用窗口："
   },
   "validation": {
     "saveFailed": "保存失败",
