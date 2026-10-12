@@ -40,8 +40,7 @@ pub fn error_line(output: &Output) -> String {
         String::from_utf8_lossy(bytes)
             .lines()
             .map(str::trim)
-            .filter(|l| !l.is_empty())
-            .next_back()
+            .rfind(|l| !l.is_empty())
             .map(str::to_string)
     };
     last_line(&output.stderr)
