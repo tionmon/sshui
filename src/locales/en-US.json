@@ -791,5 +791,39 @@
       "model": "Default model or alias, e.g. opus or sonnet. ANTHROPIC_MODEL takes precedence.",
       "defaultMode": "Permission mode new sessions start in."
     }
+  },
+  "agentProfiles": {
+    "title": "API profiles",
+    "official": "Official (default)",
+    "officialHint": {
+      "claude": "Anthropic's own API with your Claude login; removes any custom endpoint and key.",
+      "codex": "OpenAI with your ChatGPT sign-in or API key; removes the SSHUI provider."
+    },
+    "use": "Use",
+    "applied": {
+      "claude": "Switched to \"{{name}}\". New Claude Code sessions use it.",
+      "codex": "Switched to \"{{name}}\". New Codex sessions use it."
+    },
+    "newTitle": "New API profile",
+    "editTitle": "Edit API profile",
+    "namePlaceholder": "e.g. Company gateway",
+    "baseUrl": "Base URL",
+    "baseUrlHint": {
+      "claude": "Written as ANTHROPIC_BASE_URL.",
+      "codex": "OpenAI-compatible endpoint, usually ending in /v1. Written as a [model_providers.sshui] entry."
+    },
+    "apiKey": "API key",
+    "keepKey": "Saved: {{hint}} (leave empty to keep)",
+    "keyHint": "Stored in ~/.ssh-at/agent-profiles.json and written to the tool's config when the profile is used.",
+    "keyType": "Sent as",
+    "model": "Model",
+    "modelHint": "Optional. Empty means the tool's default.",
+    "deleteConfirm": "Delete the profile \"{{name}}\"? The current configuration isn't changed.",
+    "unsavedLive": "The current configuration ({{url}}) isn't saved as a profile yet.",
+    "modifiedLive": "The current models don't match any profile; using a profile replaces them.",
+    "saveCurrent": "Save as profile",
+    "importedName": "Existing setup",
+    "imported": "Saved the current configuration as \"{{name}}\"",
+    "envBaseUrl": "OPENAI_BASE_URL is set to {{url}} in your environment, so the official profile actually goes there. Save it as a profile to switch to and from it here."
   }
 }

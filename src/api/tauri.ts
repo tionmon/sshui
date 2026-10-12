@@ -519,3 +519,43 @@ export const codexInfo = (): Promise<CodexInfo> => invoke('codex_info')
 export const codexSet = (key: string, value: string | null): Promise<void> => invoke('codex_set', { key, value })
 export const claudeInfo = (): Promise<ClaudeInfo> => invoke('claude_info')
 export const claudeSet = (path: string[], value: unknown): Promise<void> => invoke('claude_set', { path, value: value ?? null })
+
+// Codex / Claude Code API profiles
+export interface AgentProfile {
+  id: string
+  name: string
+  base_url: string
+  /** Claude Code: 'token' (ANTHROPIC_AUTH_TOKEN) or 'apikey' (ANTHROPIC_API_KEY) */
+  auth: string
+  model: string
+  opus_model: string
+  sonnet_model: string
+  haiku_model: string
+  /** Codex: 'responses' or 'chat' */
+  wire_api: string
+}
+
+/** Keys never reach the page; only a masked hint does. */
+export interface AgentProfileView extends AgentProfile {
+  key_hint: string
+}
+
+export interface AgentProfilesState {
+  profiles: AgentProfileView[]
+  current_id: string | null
+  live: AgentProfileView
+  /** Codex: OPENAI_BASE_URL set in the environment */
+  env_base_url: string | null
+  store_path: string
+}
+
+export const AGENT_OFFICIAL_ID = 'official'
+export const AGENT_PROFILES_CHANGED_EVENT = 'agent-profiles-changed'
+
+export const agentProfiles = (agent: AgentId): Promise<AgentProfilesState> => invoke('agent_profiles', { agent })
+/** `apiKey: null` keeps the saved key */
+export const agentSaveProfile = (agent: AgentId, profile: AgentProfile, apiKey: string | null): Promise<void> =>
+  invoke('agent_save_profile', { agent, profile: { ...profile, api_key: '' }, apiKey })
+export const agentDeleteProfile = (agent: AgentId, id: string): Promise<void> => invoke('agent_delete_profile', { agent, id })
+export const agentApplyProfile = (agent: AgentId, id: string): Promise<void> => invoke('agent_apply_profile', { agent, id })
+export const agentImportLive = (agent: AgentId, name: string): Promise<void> => invoke('agent_import_live', { agent, name })

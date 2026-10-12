@@ -5,11 +5,13 @@ use tauri::{
 };
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
-use crate::commands::{hosts_file, proxy};
+use crate::commands::{agent_profiles, hosts_file, proxy};
 
 const TRAY_ID: &str = "main";
 const SCHEME_PREFIX: &str = "hosts-scheme:";
 const PROXY_PREFIX: &str = "proxy-profile:";
+/// "agent-profile:<agent>:<profile id>"
+const AGENT_PREFIX: &str = "agent-profile:";
 
 #[cfg(target_os = "macos")]
 use objc2_app_kit::NSApplication;
@@ -82,6 +84,31 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     if let Some(menu) = &proxy_menu {
         items.push(menu);
     }
+
+    // Codex / Claude Code API profiles, once the user has saved one
+    let mut agent_menus = Vec::new();
+    for (agent, label) in [("claude", "Claude Code"), ("codex", "Codex")] {
+        if !agent_profiles::has_custom_profiles(agent) {
+            continue;
+        }
+        let Ok(state) = agent_profiles::state_blocking(agent) else { continue };
+        let mut entries = Vec::new();
+        for p in &state.profiles {
+            entries.push(CheckMenuItem::with_id(
+                app,
+                format!("{}{}:{}", AGENT_PREFIX, agent, p.profile.id),
+                &p.profile.name,
+                true,
+                state.current_id.as_deref() == Some(p.profile.id.as_str()),
+                None::<&str>,
+            )?);
+        }
+        let refs: Vec<&dyn IsMenuItem<tauri::Wry>> = entries.iter().map(|i| i as &dyn IsMenuItem<tauri::Wry>).collect();
+        agent_menus.push(Submenu::with_items(app, label, true, &refs)?);
+    }
+    for menu in &agent_menus {
+        items.push(menu);
+    }
     let separator2 = PredefinedMenuItem::separator(app)?;
     items.push(&separator2);
     items.push(&quit_i);
@@ -112,6 +139,23 @@ fn apply_scheme_from_tray(app: &AppHandle, id: String) {
                 .title("SSHUI")
                 .kind(MessageDialogKind::Error)
                 .show(|_| {});
+        }
+    });
+}
+
+fn apply_agent_profile_from_tray(app: &AppHandle, agent: String, id: String) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let result = tauri::async_runtime::spawn_blocking(move || agent_profiles::apply_blocking(&agent, &id)).await;
+        refresh_menu(&app);
+        let _ = app.emit(agent_profiles::CHANGED_EVENT, ());
+        let error = match result {
+            Ok(Ok(())) => None,
+            Ok(Err(e)) => Some(e),
+            Err(e) => Some(e.to_string()),
+        };
+        if let Some(e) = error {
+            app.dialog().message(e).title("SSHUI").kind(MessageDialogKind::Error).show(|_| {});
         }
     });
 }
@@ -155,6 +199,11 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
         .on_menu_event(move |app, event| match event.id.as_ref() {
             id if id.starts_with(SCHEME_PREFIX) => {
                 apply_scheme_from_tray(app, id[SCHEME_PREFIX.len()..].to_string());
+            }
+            id if id.starts_with(AGENT_PREFIX) => {
+                if let Some((agent, profile)) = id[AGENT_PREFIX.len()..].split_once(':') {
+                    apply_agent_profile_from_tray(app, agent.to_string(), profile.to_string());
+                }
             }
             id if id.starts_with(PROXY_PREFIX) => {
                 apply_proxy_from_tray(app, id[PROXY_PREFIX.len()..].to_string());

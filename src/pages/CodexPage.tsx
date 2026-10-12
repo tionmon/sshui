@@ -9,6 +9,7 @@ import ConfigField from '../components/devtools/ConfigField'
 import ChoiceRow, { DEFAULT } from '../components/devtools/ChoiceRow'
 import InstructionFilesEditor from '../components/agents/InstructionFilesEditor'
 import RawConfigEditor from '../components/agents/RawConfigEditor'
+import AgentProfiles from '../components/agents/AgentProfiles'
 import { Section, Row } from '../components/SettingsSection'
 import { useToast, errorMessage } from '../contexts/ToastContext'
 import { useDevTools, TOOL_INFO_STALE_MS } from '../lib/devtools'
@@ -36,6 +37,7 @@ function CodexPage() {
       toast(value === null ? t('devtools.removed') : t('devtools.saved'))
       await reload()
       queryClient.invalidateQueries({ queryKey: ['agentConfig', 'codex'] })
+      queryClient.invalidateQueries({ queryKey: ['agentProfiles', 'codex'] })
     } catch (e) {
       toast(`${t('devtools.failed')}: ${errorMessage(e)}`, 'error')
     }
@@ -74,6 +76,13 @@ function CodexPage() {
 
           {tab === 'settings' && (
             <>
+              <AgentProfiles
+                agent="codex"
+                onApplied={() => {
+                  reload()
+                  queryClient.invalidateQueries({ queryKey: ['agentConfig', 'codex'] })
+                }}
+              />
               <Section title={t('codex.model')}>
                 <ConfigField
                   label="model"

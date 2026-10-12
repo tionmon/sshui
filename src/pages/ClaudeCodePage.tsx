@@ -9,6 +9,7 @@ import ConfigField from '../components/devtools/ConfigField'
 import ChoiceRow, { DEFAULT } from '../components/devtools/ChoiceRow'
 import InstructionFilesEditor from '../components/agents/InstructionFilesEditor'
 import RawConfigEditor from '../components/agents/RawConfigEditor'
+import AgentProfiles from '../components/agents/AgentProfiles'
 import { Section, Row } from '../components/SettingsSection'
 import { useToast, errorMessage } from '../contexts/ToastContext'
 import { useDevTools, TOOL_INFO_STALE_MS } from '../lib/devtools'
@@ -110,6 +111,7 @@ function ClaudeCodePage() {
       toast(value === null || value === '' ? t('devtools.removed') : t('devtools.saved'))
       await reload()
       queryClient.invalidateQueries({ queryKey: ['agentConfig', 'claude'] })
+      queryClient.invalidateQueries({ queryKey: ['agentProfiles', 'claude'] })
     } catch (e) {
       toast(`${t('devtools.failed')}: ${errorMessage(e)}`, 'error')
     }
@@ -141,6 +143,13 @@ function ClaudeCodePage() {
 
           {tab === 'settings' && (
             <>
+              <AgentProfiles
+                agent="claude"
+                onApplied={() => {
+                  reload()
+                  queryClient.invalidateQueries({ queryKey: ['agentConfig', 'claude'] })
+                }}
+              />
               <Section title={t('claude.api')}>
                 {API_VARS.map((name) => {
                   const current = envVar(info, name)

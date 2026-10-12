@@ -19,12 +19,12 @@ use super::proc::blocking;
 use super::userenv;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Agent {
+pub(super) enum Agent {
     Codex,
     Claude,
 }
 
-fn agent(id: &str) -> Result<Agent, String> {
+pub(super) fn agent(id: &str) -> Result<Agent, String> {
     match id {
         "codex" => Ok(Agent::Codex),
         "claude" => Ok(Agent::Claude),
@@ -44,7 +44,7 @@ fn agent_home(agent: Agent) -> Result<PathBuf, String> {
     }
 }
 
-fn config_path(agent: Agent) -> Result<PathBuf, String> {
+pub(super) fn config_path(agent: Agent) -> Result<PathBuf, String> {
     Ok(agent_home(agent)?.join(match agent {
         Agent::Codex => "config.toml",
         Agent::Claude => "settings.json",
@@ -68,7 +68,7 @@ pub fn claude_bin() -> Option<PathBuf> {
     })
 }
 
-fn read_text(path: &Path) -> Result<String, String> {
+pub(super) fn read_text(path: &Path) -> Result<String, String> {
     match fs::read_to_string(path) {
         Ok(t) => Ok(t),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
@@ -77,7 +77,7 @@ fn read_text(path: &Path) -> Result<String, String> {
 }
 
 /// Write a config file, keeping the previous version as `<file>.sshui-bak`.
-fn write_with_backup(path: &Path, content: &str) -> Result<(), String> {
+pub(super) fn write_with_backup(path: &Path, content: &str) -> Result<(), String> {
     if path.is_file() {
         let mut backup = path.as_os_str().to_owned();
         backup.push(".sshui-bak");
@@ -502,7 +502,7 @@ fn is_secret(name: &str) -> bool {
     ["KEY", "TOKEN", "SECRET", "PASSWORD"].iter().any(|s| upper.contains(s))
 }
 
-fn read_settings(path: &Path) -> Result<Map<String, Value>, String> {
+pub(super) fn read_settings(path: &Path) -> Result<Map<String, Value>, String> {
     let text = read_text(path)?;
     if text.trim().is_empty() {
         return Ok(Map::new());
@@ -556,7 +556,7 @@ pub async fn claude_info() -> Result<ClaudeInfo, String> {
 
 /// Set (or remove, with `None`) the value at `path`, creating objects on the way and
 /// removing objects left empty.
-fn json_set(root: &mut Map<String, Value>, path: &[&str], v: Option<Value>) {
+pub(super) fn json_set(root: &mut Map<String, Value>, path: &[&str], v: Option<Value>) {
     let Some((last, parents)) = path.split_last() else { return };
     if let Some((first, rest)) = parents.split_first() {
         if v.is_none() && !root.get(*first).is_some_and(Value::is_object) {
@@ -611,7 +611,7 @@ fn claude_apply(settings: &mut Map<String, Value>, path: &[String], v: Option<Va
     Ok(())
 }
 
-fn save_settings_map(path: &Path, settings: &Map<String, Value>) -> Result<(), String> {
+pub(super) fn save_settings_map(path: &Path, settings: &Map<String, Value>) -> Result<(), String> {
     let text = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
     write_with_backup(path, &(text + "\n"))
 }

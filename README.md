@@ -45,7 +45,7 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
   - GitHub: gh login, SSH access test, git identity and proxy
   - npm, pip, Cargo/rustup and Go: registry mirrors with speed tests, proxies and tokens
   - Docker: registry logins and Docker Hub mirrors
-  - Codex CLI and Claude Code: model, approvals/permissions and API settings; edit AGENTS.md / CLAUDE.md, custom prompts, subagents, slash commands, output styles and skills; raw config.toml / settings.json editor
+  - Codex CLI and Claude Code: saved API profiles (base URL, key, models) switched in one click or from the tray; model, approvals/permissions; edit AGENTS.md / CLAUDE.md, custom prompts, subagents, slash commands, output styles and skills; raw config.toml / settings.json editor
   - Windows: user PATH and environment variable editor, WSL (.wslconfig) settings and distributions
   - Tools that aren't installed show a "not installed" view; nothing is read or started for them
 

@@ -45,7 +45,7 @@
   - GitHub：gh 登录、SSH 连通性测试、git 身份与代理
   - npm、pip、Cargo/rustup、Go：镜像源（含测速）、代理与令牌
   - Docker：镜像仓库登录与 Docker Hub 加速镜像
-  - Codex CLI 与 Claude Code：模型、审批/权限与 API 设置；编辑 AGENTS.md / CLAUDE.md、自定义提示词、子代理、斜杠命令、输出风格与技能；直接编辑 config.toml / settings.json
+  - Codex CLI 与 Claude Code：保存多套 API 方案（地址、密钥、模型），一键或从托盘切换；模型、审批/权限；编辑 AGENTS.md / CLAUDE.md、自定义提示词、子代理、斜杠命令、输出风格与技能；直接编辑 config.toml / settings.json
   - Windows：用户 PATH 与环境变量编辑、WSL（.wslconfig）设置与发行版
   - 未安装的工具显示“未安装”视图，不会读取或启动它们
 
