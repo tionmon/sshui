@@ -19,6 +19,8 @@ import {
   PrecisionManufacturingOutlined,
   CodeOutlined,
   TerminalOutlined,
+  SmartToyOutlined,
+  AutoAwesomeOutlined,
 } from '@mui/icons-material'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -41,6 +43,8 @@ import EnvPage from '../pages/EnvPage'
 import RustPage from '../pages/RustPage'
 import GoPage from '../pages/GoPage'
 import WslPage from '../pages/WslPage'
+import CodexPage from '../pages/CodexPage'
+import ClaudeCodePage from '../pages/ClaudeCodePage'
 import { IS_WINDOWS } from '../lib/devtools'
 
 const sidebarWidth = 232
@@ -109,6 +113,8 @@ function Layout() {
     { text: 'Python', icon: <IntegrationInstructionsOutlined />, path: '/pip', show: !!settings?.show_pip },
     { text: 'Rust', icon: <PrecisionManufacturingOutlined />, path: '/rust', show: !!settings?.show_rust },
     { text: 'Go', icon: <CodeOutlined />, path: '/go', show: !!settings?.show_go },
+    { text: 'Codex CLI', icon: <SmartToyOutlined />, path: '/codex', show: !!settings?.show_codex },
+    { text: 'Claude Code', icon: <AutoAwesomeOutlined />, path: '/claude', show: !!settings?.show_claude },
   ].filter((item) => item.show)
 
   const systemItems = [
@@ -239,6 +245,8 @@ function Layout() {
             <Route path="/proxy" element={<ProxyPage />} />
             <Route path="/env" element={<EnvPage />} />
             <Route path="/wsl" element={<WslPage />} />
+            <Route path="/codex" element={<CodexPage />} />
+            <Route path="/claude" element={<ClaudeCodePage />} />
             <Route path="/backups" element={<BackupsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

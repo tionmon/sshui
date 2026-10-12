@@ -97,7 +97,9 @@
     "show_envHelp": "Edit your user PATH and environment variables",
     "show_wslHelp": "Memory, networking and other .wslconfig settings; distributions",
     "show_rustHelp": "crates.io and rustup mirrors, proxy and token",
-    "show_goHelp": "GOPROXY mirror, GOSUMDB, GOPRIVATE and GOTOOLCHAIN"
+    "show_goHelp": "GOPROXY mirror, GOSUMDB, GOPRIVATE and GOTOOLCHAIN",
+    "show_codexHelp": "Model, approvals, sandbox, AGENTS.md, prompts and skills",
+    "show_claudeHelp": "API endpoint, models, permissions, CLAUDE.md, subagents, commands and skills"
   },
   "hosts": {
     "title": "SSH Hosts",
@@ -569,7 +571,8 @@
       "pip": "pip",
       "cargo": "Cargo",
       "env": "Environment variables",
-      "system": "Windows system proxy"
+      "system": "Windows system proxy",
+      "claude": "Claude Code"
     },
     "targetHints": {
       "git": "http.proxy and https.proxy",
@@ -577,7 +580,8 @@
       "pip": "proxy in [global]",
       "cargo": "Used by cargo; rustup reads the environment variables",
       "env": "Read by curl, Go, rustup, Python and most CLI tools",
-      "system": "Browsers and most desktop apps"
+      "system": "Browsers and most desktop apps",
+      "claude": "HTTPS_PROXY, HTTP_PROXY and NO_PROXY in its settings"
     },
     "newTitle": "New proxy profile",
     "editTitle": "Edit proxy profile",
@@ -704,5 +708,88 @@
       "autoMemoryReclaim": "How WSL returns cached memory to Windows."
     },
     "notInstalledHint": "WSL isn't set up on this PC. Run \"wsl --install\" in an administrator terminal (a restart may be needed), then check again."
+  },
+  "agents": {
+    "tabSettings": "Settings",
+    "tabInstructions": "Instructions",
+    "groups": {
+      "global": "Global instructions",
+      "override": "Override",
+      "prompts": "Custom prompts",
+      "skills": "Skills",
+      "agents": "Subagents",
+      "commands": "Slash commands",
+      "outputStyles": "Output styles"
+    },
+    "groupHints": {
+      "global": "Read at the start of every session, in every project",
+      "override": "AGENTS.override.md replaces AGENTS.md while it exists",
+      "prompts": "Reusable prompts, run as /prompts:<name>",
+      "skills": "Folders with a SKILL.md the agent loads when relevant",
+      "agents": "Specialised agents Claude can delegate to",
+      "commands": "Run as /<name>; subfolders become namespaces",
+      "outputStyles": "Change how Claude responds, chosen with /output-style"
+    },
+    "none": "None yet",
+    "notCreated": "New",
+    "empty": "Empty",
+    "newIn": "New file in {{group}}",
+    "fileName": "Name",
+    "nameInvalid": "Use letters, numbers and dashes",
+    "nameTaken": "A file with this name already exists",
+    "create": "Create",
+    "revert": "Revert",
+    "unsaved": "Unsaved changes",
+    "discardChanges": "Discard the unsaved changes to this file?",
+    "deleteConfirm": "Delete {{path}}?",
+    "folder": "Folder",
+    "rawHint": "The whole file. It's checked to be valid {{format}} before saving, and the previous version is kept next to it with a .sshui-bak extension."
+  },
+  "codex": {
+    "subtitle": "Model, approvals, sandbox and AGENTS.md",
+    "model": "Model",
+    "permissions": "Approvals and sandbox",
+    "account": "Account and integrations",
+    "auth": "Sign-in",
+    "authChatgpt": "Signed in with ChatGPT",
+    "authApiKey": "Using an API key",
+    "authNone": "Not signed in. Run \"codex login\".",
+    "mcpServers": "MCP servers",
+    "providers": "Custom model providers",
+    "noneConfigured": "None configured",
+    "moreInConfig": "MCP servers, model providers, profiles and everything else can be edited in the config.toml tab.",
+    "help": {
+      "model": "The model Codex uses by default.",
+      "model_reasoning_effort": "How much the model thinks before answering. Higher is slower and more thorough.",
+      "model_provider": "Which provider serves the model; custom ones are defined under [model_providers].",
+      "approval_policy": "When Codex asks before running a command.",
+      "sandbox_mode": "What commands may touch: read-only, the workspace, or everything."
+    }
+  },
+  "claude": {
+    "subtitle": "API endpoint, models, permissions and CLAUDE.md",
+    "api": "API and models",
+    "current": "current",
+    "replaceSecret": "Enter a new value to replace it",
+    "permissions": "Permissions",
+    "otherEnv": "Other environment variables",
+    "otherEnvHint": "Set for every Claude Code session, e.g. HTTPS_PROXY or DISABLE_TELEMETRY.",
+    "moreInSettings": "Hooks, status line, MCP settings and everything else can be edited in the settings.json tab.",
+    "rules": {
+      "allow": "Tools and commands that run without asking.",
+      "ask": "Always ask before these, even if allowed elsewhere.",
+      "deny": "Never allowed."
+    },
+    "help": {
+      "ANTHROPIC_BASE_URL": "API endpoint. Set it to use a gateway or a compatible provider.",
+      "ANTHROPIC_AUTH_TOKEN": "Sent as a Bearer token; used by most gateways.",
+      "ANTHROPIC_API_KEY": "An Anthropic API key, sent as x-api-key.",
+      "ANTHROPIC_MODEL": "Model for the main conversation.",
+      "ANTHROPIC_DEFAULT_OPUS_MODEL": "Model used for the \"opus\" alias.",
+      "ANTHROPIC_DEFAULT_SONNET_MODEL": "Model used for the \"sonnet\" alias.",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "Model used for the \"haiku\" alias and background tasks.",
+      "model": "Default model or alias, e.g. opus or sonnet. ANTHROPIC_MODEL takes precedence.",
+      "defaultMode": "Permission mode new sessions start in."
+    }
   }
 }

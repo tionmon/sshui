@@ -12,13 +12,13 @@ use tauri::{AppHandle, Emitter};
 
 use super::devtools::{find_in_path, ini_get, ini_read, ini_set, npm_bin, npmrc_path, pip_config_path, python_bin, read_npmrc, validate_url, write_file};
 use super::proc::blocking;
-use super::{github, rust, userenv};
+use super::{agents, github, rust, userenv};
 
 pub const STATE_CHANGED_EVENT: &str = "proxy-state-changed";
 /// The built-in "no proxy" profile
 pub const DIRECT_ID: &str = "direct";
 
-const TARGETS: [&str; 6] = ["git", "npm", "pip", "cargo", "env", "system"];
+const TARGETS: [&str; 7] = ["git", "npm", "pip", "cargo", "claude", "env", "system"];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProxyProfile {
@@ -105,6 +105,7 @@ fn available(target: &str) -> bool {
         "npm" => npm_bin().is_some(),
         "pip" => python_bin().is_some(),
         "cargo" => rust::cargo_bin().is_some(),
+        "claude" => agents::claude_bin().is_some(),
         "env" | "system" => cfg!(windows),
         _ => false,
     }
@@ -117,6 +118,7 @@ fn location(target: &str) -> String {
         "npm" => path(npmrc_path()),
         "pip" => path(pip_config_path()),
         "cargo" => "~/.cargo/config.toml [http] proxy".into(),
+        "claude" => "~/.claude/settings.json env".into(),
         "env" => "HTTP_PROXY, HTTPS_PROXY, NO_PROXY".into(),
         "system" => "Windows Settings → Network → Proxy".into(),
         _ => String::new(),
@@ -135,6 +137,7 @@ fn current(target: &str) -> Option<String> {
             ini_get(&ini_read(&content, Some("global")), "proxy")
         }
         "cargo" => rust::cargo_proxy(),
+        "claude" => agents::claude_proxy(),
         "env" => userenv::effective_var("HTTPS_PROXY").or_else(|| userenv::effective_var("HTTP_PROXY")),
         #[cfg(windows)]
         "system" => sysproxy::current(),
@@ -165,6 +168,7 @@ fn apply_target(target: &str, profile: Option<&ProxyProfile>) -> Result<(), Stri
             write_file(&path, &ini_set(&content, Some("global"), "proxy", url, " = "))
         }
         "cargo" => rust::set_cargo_proxy(url),
+        "claude" => agents::set_claude_proxy(url, no_proxy),
         "env" => {
             userenv::set_user_var("HTTP_PROXY", url)?;
             userenv::set_user_var("HTTPS_PROXY", url)?;

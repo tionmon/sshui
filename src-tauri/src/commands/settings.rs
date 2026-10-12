@@ -30,6 +30,11 @@ pub struct AppSettings {
     /// WSL page (Windows)
     #[serde(default)]
     pub show_wsl: bool,
+    /// AI coding agents
+    #[serde(default)]
+    pub show_codex: bool,
+    #[serde(default)]
+    pub show_claude: bool,
 }
 
 fn default_true() -> bool {
@@ -51,6 +56,8 @@ impl Default for AppSettings {
             show_rust: false,
             show_go: false,
             show_wsl: false,
+            show_codex: false,
+            show_claude: false,
         }
     }
 }

@@ -97,7 +97,9 @@
     "show_envHelp": "编辑用户 PATH 与环境变量",
     "show_wslHelp": "内存、网络等 .wslconfig 设置与发行版",
     "show_rustHelp": "crates.io 与 rustup 镜像、代理和令牌",
-    "show_goHelp": "GOPROXY 镜像、GOSUMDB、GOPRIVATE 与 GOTOOLCHAIN"
+    "show_goHelp": "GOPROXY 镜像、GOSUMDB、GOPRIVATE 与 GOTOOLCHAIN",
+    "show_codexHelp": "模型、审批、沙箱、AGENTS.md、提示词与技能",
+    "show_claudeHelp": "API 地址、模型、权限、CLAUDE.md、子代理、命令与技能"
   },
   "hosts": {
     "title": "SSH 主机",
@@ -569,7 +571,8 @@
       "pip": "pip",
       "cargo": "Cargo",
       "env": "环境变量",
-      "system": "Windows 系统代理"
+      "system": "Windows 系统代理",
+      "claude": "Claude Code"
     },
     "targetHints": {
       "git": "http.proxy 和 https.proxy",
@@ -577,7 +580,8 @@
       "pip": "[global] 中的 proxy",
       "cargo": "cargo 使用；rustup 读取环境变量",
       "env": "curl、Go、rustup、Python 等多数命令行工具会读取",
-      "system": "浏览器和大多数桌面程序"
+      "system": "浏览器和大多数桌面程序",
+      "claude": "其设置中的 HTTPS_PROXY、HTTP_PROXY 和 NO_PROXY"
     },
     "newTitle": "新建代理方案",
     "editTitle": "编辑代理方案",
@@ -704,5 +708,88 @@
       "autoMemoryReclaim": "WSL 将缓存内存归还给 Windows 的方式。"
     },
     "notInstalledHint": "此电脑尚未启用 WSL。请在管理员终端中运行“wsl --install”（可能需要重启），然后重新检测。"
+  },
+  "agents": {
+    "tabSettings": "设置",
+    "tabInstructions": "指令文件",
+    "groups": {
+      "global": "全局指令",
+      "override": "覆盖文件",
+      "prompts": "自定义提示词",
+      "skills": "技能",
+      "agents": "子代理",
+      "commands": "斜杠命令",
+      "outputStyles": "输出风格"
+    },
+    "groupHints": {
+      "global": "每个会话开始时读取，对所有项目生效",
+      "override": "存在 AGENTS.override.md 时会替代 AGENTS.md",
+      "prompts": "可复用的提示词，用 /prompts:<名称> 调用",
+      "skills": "含 SKILL.md 的文件夹，代理在需要时加载",
+      "agents": "Claude 可以委派任务的专用代理",
+      "commands": "用 /<名称> 调用；子文件夹作为命名空间",
+      "outputStyles": "改变 Claude 的回复方式，用 /output-style 选择"
+    },
+    "none": "暂无",
+    "notCreated": "未创建",
+    "empty": "空",
+    "newIn": "在“{{group}}”中新建",
+    "fileName": "名称",
+    "nameInvalid": "请使用字母、数字和短横线",
+    "nameTaken": "已存在同名文件",
+    "create": "创建",
+    "revert": "撤销更改",
+    "unsaved": "未保存的更改",
+    "discardChanges": "放弃此文件未保存的更改？",
+    "deleteConfirm": "删除 {{path}}？",
+    "folder": "目录",
+    "rawHint": "完整文件内容。保存前会校验是否为有效的 {{format}}，旧版本保存在同目录的 .sshui-bak 文件中。"
+  },
+  "codex": {
+    "subtitle": "模型、审批、沙箱与 AGENTS.md",
+    "model": "模型",
+    "permissions": "审批与沙箱",
+    "account": "账户与集成",
+    "auth": "登录方式",
+    "authChatgpt": "已通过 ChatGPT 登录",
+    "authApiKey": "使用 API Key",
+    "authNone": "未登录。请运行“codex login”。",
+    "mcpServers": "MCP 服务器",
+    "providers": "自定义模型提供方",
+    "noneConfigured": "未配置",
+    "moreInConfig": "MCP 服务器、模型提供方、profiles 等其他设置可在 config.toml 标签页中编辑。",
+    "help": {
+      "model": "Codex 默认使用的模型。",
+      "model_reasoning_effort": "模型回答前的思考程度，越高越慢也越周全。",
+      "model_provider": "提供模型的服务方，自定义的在 [model_providers] 中定义。",
+      "approval_policy": "Codex 执行命令前何时征求确认。",
+      "sandbox_mode": "命令可访问的范围：只读、工作区或全部。"
+    }
+  },
+  "claude": {
+    "subtitle": "API 地址、模型、权限与 CLAUDE.md",
+    "api": "API 与模型",
+    "current": "当前",
+    "replaceSecret": "输入新值以替换",
+    "permissions": "权限",
+    "otherEnv": "其他环境变量",
+    "otherEnvHint": "对所有 Claude Code 会话生效，如 HTTPS_PROXY 或 DISABLE_TELEMETRY。",
+    "moreInSettings": "Hooks、状态栏、MCP 等其他设置可在 settings.json 标签页中编辑。",
+    "rules": {
+      "allow": "无需确认即可运行的工具和命令。",
+      "ask": "即使在其他地方允许，也总是先询问。",
+      "deny": "始终禁止。"
+    },
+    "help": {
+      "ANTHROPIC_BASE_URL": "API 地址，用于网关或兼容的服务商。",
+      "ANTHROPIC_AUTH_TOKEN": "以 Bearer 令牌发送，多数网关使用此项。",
+      "ANTHROPIC_API_KEY": "Anthropic API Key，以 x-api-key 发送。",
+      "ANTHROPIC_MODEL": "主对话使用的模型。",
+      "ANTHROPIC_DEFAULT_OPUS_MODEL": "“opus”别名对应的模型。",
+      "ANTHROPIC_DEFAULT_SONNET_MODEL": "“sonnet”别名对应的模型。",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "“haiku”别名及后台任务使用的模型。",
+      "model": "默认模型或别名，如 opus、sonnet。ANTHROPIC_MODEL 优先。",
+      "defaultMode": "新会话开始时的权限模式。"
+    }
   }
 }

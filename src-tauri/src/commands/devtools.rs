@@ -34,6 +34,8 @@ pub struct DevTools {
     pub go: ToolPresence,
     /// Windows only
     pub wsl: ToolPresence,
+    pub codex: ToolPresence,
+    pub claude: ToolPresence,
 }
 
 #[cfg(windows)]
@@ -110,6 +112,8 @@ pub async fn detect_dev_tools() -> Result<DevTools, String> {
         rust: presence(super::rust::cargo_bin().or_else(super::rust::rustup_bin)),
         go: presence(super::golang::go_bin()),
         wsl: presence(super::wsl::wsl_bin()),
+        codex: presence(super::agents::codex_bin()),
+        claude: presence(super::agents::claude_bin()),
     })
     .await
 }
@@ -147,7 +151,12 @@ pub(super) fn env_overrides(names: &[&str]) -> BTreeMap<String, String> {
         .filter_map(|name| {
             super::userenv::effective_var(name)
                 .or_else(|| super::userenv::effective_var(&name.to_uppercase()))
-                .map(|v| (name.to_string(), v))
+                .map(|v| {
+                    // Never show secrets in the override warning
+                    let upper = name.to_uppercase();
+                    let secret = ["KEY", "TOKEN", "SECRET", "PASSWORD"].iter().any(|s| upper.contains(s));
+                    (name.to_string(), if secret { mask(&v) } else { v })
+                })
         })
         .collect()
 }

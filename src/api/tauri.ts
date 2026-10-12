@@ -144,6 +144,8 @@ export interface AppSettings {
   show_rust?: boolean
   show_go?: boolean
   show_wsl?: boolean
+  show_codex?: boolean
+  show_claude?: boolean
 }
 
 export const loadSettings = (): Promise<AppSettings> =>
@@ -257,6 +259,8 @@ export interface DevTools {
   go: ToolPresence
   /** Windows only */
   wsl: ToolPresence
+  codex: ToolPresence
+  claude: ToolPresence
 }
 
 export interface NpmInfo {
@@ -329,7 +333,7 @@ export interface ProxyProfile {
   no_proxy: string
 }
 
-export type ProxyTarget = 'git' | 'npm' | 'pip' | 'cargo' | 'env' | 'system'
+export type ProxyTarget = 'git' | 'npm' | 'pip' | 'cargo' | 'claude' | 'env' | 'system'
 
 export interface ProxyTargetStatus {
   id: ProxyTarget
@@ -447,3 +451,71 @@ export const wslSetConfig = (section: string, key: string, value: string | null)
   invoke('wsl_set_config', { section, key, value })
 export const wslShutdown = (): Promise<void> => invoke('wsl_shutdown')
 export const wslSetDefault = (name: string): Promise<void> => invoke('wsl_set_default', { name })
+
+// AI coding agents (Codex CLI, Claude Code)
+export type AgentId = 'codex' | 'claude'
+
+export interface InstructionFile {
+  /** Relative to the agent's home, '/'-separated */
+  path: string
+  exists: boolean
+  size: number
+  modified_ms: number
+}
+
+export interface InstructionGroup {
+  id: string
+  dir: string
+  layout: 'single' | 'flat' | 'nested' | 'skill'
+  files: InstructionFile[]
+}
+
+export interface InstructionFiles {
+  home: string
+  groups: InstructionGroup[]
+}
+
+export interface AgentConfigFile {
+  path: string
+  exists: boolean
+  content: string
+}
+
+export interface CodexInfo {
+  version: string | null
+  config_path: string
+  config_exists: boolean
+  model: string | null
+  model_reasoning_effort: string | null
+  model_provider: string | null
+  approval_policy: string | null
+  sandbox_mode: string | null
+  providers: string[]
+  mcp_servers: string[]
+  auth_mode: string | null
+  env_overrides: Record<string, string>
+}
+
+export interface ClaudeInfo {
+  version: string | null
+  settings_path: string
+  settings_exists: boolean
+  model: string | null
+  default_mode: string | null
+  env: { name: string; value: string; secret: boolean }[]
+  allow: string[]
+  deny: string[]
+  ask: string[]
+}
+
+export const agentInstructionFiles = (agent: AgentId): Promise<InstructionFiles> => invoke('agent_instruction_files', { agent })
+export const agentReadFile = (agent: AgentId, path: string): Promise<string> => invoke('agent_read_file', { agent, path })
+export const agentWriteFile = (agent: AgentId, path: string, content: string, create = false): Promise<void> =>
+  invoke('agent_write_file', { agent, path, content, create })
+export const agentDeleteFile = (agent: AgentId, path: string): Promise<void> => invoke('agent_delete_file', { agent, path })
+export const agentConfig = (agent: AgentId): Promise<AgentConfigFile> => invoke('agent_config', { agent })
+export const agentSaveConfig = (agent: AgentId, content: string): Promise<void> => invoke('agent_save_config', { agent, content })
+export const codexInfo = (): Promise<CodexInfo> => invoke('codex_info')
+export const codexSet = (key: string, value: string | null): Promise<void> => invoke('codex_set', { key, value })
+export const claudeInfo = (): Promise<ClaudeInfo> => invoke('claude_info')
+export const claudeSet = (path: string[], value: unknown): Promise<void> => invoke('claude_set', { path, value: value ?? null })

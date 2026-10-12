@@ -12,3 +12,4 @@ pub mod proxy;
 pub mod rust;
 pub mod golang;
 pub mod wsl;
+pub mod agents;

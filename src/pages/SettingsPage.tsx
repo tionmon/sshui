@@ -26,6 +26,8 @@ function SettingsPage() {
     show_go: false,
     show_env: false,
     show_wsl: false,
+    show_codex: false,
+    show_claude: false,
   })
   const [showProxy, setShowProxy] = useState(true)
   const { data: devTools } = useDevTools()
@@ -52,6 +54,8 @@ function SettingsPage() {
           show_go: !!settings.show_go,
           show_env: !!settings.show_env,
           show_wsl: !!settings.show_wsl,
+          show_codex: !!settings.show_codex,
+          show_claude: !!settings.show_claude,
         })
       })
       .catch((error) => {
@@ -216,6 +220,8 @@ function SettingsPage() {
             ['show_pip', 'python', 'Python (pip)', false],
             ['show_rust', 'rust', 'Rust (Cargo, rustup)', false],
             ['show_go', 'go', 'Go', false],
+            ['show_codex', 'codex', 'Codex CLI', false],
+            ['show_claude', 'claude', 'Claude Code', false],
           ] as [keyof typeof devPages, keyof DevTools | null, string, boolean][]
         )
           .filter(([, , , windowsOnly]) => IS_WINDOWS || !windowsOnly)

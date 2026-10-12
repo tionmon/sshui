@@ -5,7 +5,7 @@
 mod commands;
 mod tray;
 
-use commands::{config, keys, backup, system, settings, hosts_file, github, devtools, userenv, proxy, rust, golang, wsl};
+use commands::{config, keys, backup, system, settings, hosts_file, github, devtools, userenv, proxy, rust, golang, wsl, agents};
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
@@ -119,6 +119,16 @@ fn main() {
             wsl::wsl_set_config,
             wsl::wsl_shutdown,
             wsl::wsl_set_default,
+            agents::agent_instruction_files,
+            agents::agent_read_file,
+            agents::agent_write_file,
+            agents::agent_delete_file,
+            agents::agent_config,
+            agents::agent_save_config,
+            agents::codex_info,
+            agents::codex_set,
+            agents::claude_info,
+            agents::claude_set,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

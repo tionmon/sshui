@@ -38,13 +38,14 @@
 
 - **🌐 代理方案**
   - 保存多个代理（如本地 Clash 端口、公司代理），在应用内或托盘中一键切换
-  - 同时应用到 git、npm、pip、Cargo、HTTP(S)_PROXY 环境变量和 Windows 系统代理
+  - 同时应用到 git、npm、pip、Cargo、Claude Code、HTTP(S)_PROXY 环境变量和 Windows 系统代理
   - 显示各工具是否与当前方案一致
 
 - **🧰 开发与系统工具**（可在 设置 → 高级 中分别显示或隐藏）
   - GitHub：gh 登录、SSH 连通性测试、git 身份与代理
   - npm、pip、Cargo/rustup、Go：镜像源（含测速）、代理与令牌
   - Docker：镜像仓库登录与 Docker Hub 加速镜像
+  - Codex CLI 与 Claude Code：模型、审批/权限与 API 设置；编辑 AGENTS.md / CLAUDE.md、自定义提示词、子代理、斜杠命令、输出风格与技能；直接编辑 config.toml / settings.json
   - Windows：用户 PATH 与环境变量编辑、WSL（.wslconfig）设置与发行版
   - 未安装的工具显示“未安装”视图，不会读取或启动它们
 
