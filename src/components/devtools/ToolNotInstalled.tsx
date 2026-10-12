@@ -11,17 +11,19 @@ interface ToolNotInstalledProps {
   installUrl: string
   onRecheck: () => void
   checking: boolean
+  /** Replaces the default "not found on PATH" explanation */
+  hint?: string
 }
 
 /** Shown instead of a tool's page when it isn't on PATH; nothing is read from disk. */
-function ToolNotInstalled({ icon, name, installUrl, onRecheck, checking }: ToolNotInstalledProps) {
+function ToolNotInstalled({ icon, name, installUrl, onRecheck, checking, hint }: ToolNotInstalledProps) {
   const { t } = useTranslation()
   return (
     <Paper variant="outlined" sx={(theme) => ({ boxShadow: `0 1px 2px rgba(0,0,0,.05), ${theme.tokens.edge}` })}>
       <EmptyState
         icon={icon}
         title={t('devtools.notInstalled', { name })}
-        description={t('devtools.notInstalledHint', { name })}
+        description={hint ?? t('devtools.notInstalledHint', { name })}
         action={
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button startIcon={<Refresh />} onClick={onRecheck} disabled={checking}>

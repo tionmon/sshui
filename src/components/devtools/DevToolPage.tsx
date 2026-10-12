@@ -22,6 +22,8 @@ interface DevToolPageProps {
   envOverrides?: Record<string, string>
   loading: boolean
   error?: unknown
+  /** Explanation shown when the tool isn't installed */
+  notInstalledHint?: string
   children: ReactNode
 }
 
@@ -40,6 +42,7 @@ function DevToolPage({
   envOverrides,
   loading,
   error,
+  notInstalledHint,
   children,
 }: DevToolPageProps) {
   const { t } = useTranslation()
@@ -68,7 +71,14 @@ function DevToolPage({
       {detecting ? (
         <Skeleton variant="rounded" height={160} />
       ) : !installed ? (
-        <ToolNotInstalled icon={icon} name={title} installUrl={installUrl} onRecheck={recheck} checking={rechecking} />
+        <ToolNotInstalled
+          icon={icon}
+          name={title}
+          installUrl={installUrl}
+          onRecheck={recheck}
+          checking={rechecking}
+          hint={notInstalledHint}
+        />
       ) : (
         <>
           {error ? (

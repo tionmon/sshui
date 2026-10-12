@@ -5,10 +5,11 @@ use tauri::{
 };
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
-use crate::commands::hosts_file;
+use crate::commands::{hosts_file, proxy};
 
 const TRAY_ID: &str = "main";
 const SCHEME_PREFIX: &str = "hosts-scheme:";
+const PROXY_PREFIX: &str = "proxy-profile:";
 
 #[cfg(target_os = "macos")]
 use objc2_app_kit::NSApplication;
@@ -48,17 +49,43 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let scheme_refs: Vec<&dyn IsMenuItem<tauri::Wry>> = scheme_items.iter().map(|i| i.as_ref()).collect();
     let hosts_menu = Submenu::with_items(app, "Hosts schemes", true, &scheme_refs)?;
 
-    Menu::with_items(
-        app,
-        &[
-            &show_i,
-            &hide_i,
-            &PredefinedMenuItem::separator(app)?,
-            &hosts_menu,
-            &PredefinedMenuItem::separator(app)?,
-            &quit_i,
-        ],
-    )
+    let separator = PredefinedMenuItem::separator(app)?;
+    let mut items: Vec<&dyn IsMenuItem<tauri::Wry>> = vec![&show_i, &hide_i, &separator, &hosts_menu];
+
+    // Proxy profiles, once the user has created any
+    let proxy_menu = match proxy::load_state() {
+        Ok(state) if !state.profiles.is_empty() => {
+            let active = state.active_id.as_deref();
+            let mut entries = vec![CheckMenuItem::with_id(
+                app,
+                format!("{}{}", PROXY_PREFIX, proxy::DIRECT_ID),
+                "Direct (no proxy)",
+                true,
+                active == Some(proxy::DIRECT_ID),
+                None::<&str>,
+            )?];
+            for profile in &state.profiles {
+                entries.push(CheckMenuItem::with_id(
+                    app,
+                    format!("{}{}", PROXY_PREFIX, profile.id),
+                    &profile.name,
+                    true,
+                    active == Some(profile.id.as_str()),
+                    None::<&str>,
+                )?);
+            }
+            let refs: Vec<&dyn IsMenuItem<tauri::Wry>> = entries.iter().map(|i| i as &dyn IsMenuItem<tauri::Wry>).collect();
+            Some(Submenu::with_items(app, "Proxy", true, &refs)?)
+        }
+        _ => None,
+    };
+    if let Some(menu) = &proxy_menu {
+        items.push(menu);
+    }
+    let separator2 = PredefinedMenuItem::separator(app)?;
+    items.push(&separator2);
+    items.push(&quit_i);
+    Menu::with_items(app, &items)
 }
 
 /// Rebuild the tray menu after schemes or the active scheme change.
@@ -89,6 +116,27 @@ fn apply_scheme_from_tray(app: &AppHandle, id: String) {
     });
 }
 
+fn apply_proxy_from_tray(app: &AppHandle, id: String) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let result = tauri::async_runtime::spawn_blocking(move || proxy::apply_blocking(&id)).await;
+        refresh_menu(&app);
+        let _ = app.emit(proxy::STATE_CHANGED_EVENT, ());
+        let failures: Vec<String> = match result {
+            Ok(Ok(results)) => results.into_iter().filter(|r| !r.ok).map(|r| format!("{}: {}", r.target, r.message)).collect(),
+            Ok(Err(e)) => vec![e],
+            Err(e) => vec![e.to_string()],
+        };
+        if !failures.is_empty() {
+            app.dialog()
+                .message(failures.join("\n"))
+                .title("SSHUI")
+                .kind(MessageDialogKind::Error)
+                .show(|_| {});
+        }
+    });
+}
+
 pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = build_menu(app)?;
 
@@ -107,6 +155,9 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
         .on_menu_event(move |app, event| match event.id.as_ref() {
             id if id.starts_with(SCHEME_PREFIX) => {
                 apply_scheme_from_tray(app, id[SCHEME_PREFIX.len()..].to_string());
+            }
+            id if id.starts_with(PROXY_PREFIX) => {
+                apply_proxy_from_tray(app, id[PROXY_PREFIX.len()..].to_string());
             }
             "quit" => {
                 eprintln!("[TRAY] Quit menu item clicked");

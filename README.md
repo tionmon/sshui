@@ -36,6 +36,18 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
   - Requests administrator rights only when needed (UAC / macOS prompt / pkexec)
   - Automatic backup of the previous hosts file and DNS cache flush on every switch
 
+- **🌐 Proxy Profiles**
+  - Save proxies (e.g. a local Clash port, the office proxy) and switch them in one click, also from the tray
+  - Applies to git, npm, pip, Cargo, the HTTP(S)_PROXY environment variables and the Windows system proxy
+  - Shows which tools match the active profile
+
+- **🧰 Developer & System Tools** (each can be shown or hidden in Settings → Advanced)
+  - GitHub: gh login, SSH access test, git identity and proxy
+  - npm, pip, Cargo/rustup and Go: registry mirrors with speed tests, proxies and tokens
+  - Docker: registry logins and Docker Hub mirrors
+  - Windows: user PATH and environment variable editor, WSL (.wslconfig) settings and distributions
+  - Tools that aren't installed show a "not installed" view; nothing is read or started for them
+
 - **🌍 Multi-language Support**
   - English / 中文
   - Auto-detect system language
@@ -100,7 +112,7 @@ Go to [Releases](https://github.com/tionmon/sshui/releases) and download:
 **Prerequisites:**
 - Node.js 20+
 - pnpm 8+
-- Rust 1.70+
+- Rust 1.88+
 - Platform-specific dependencies:
   - **macOS**: Xcode Command Line Tools, `create-dmg` (`brew install create-dmg`)
   - **Linux**: `libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf`

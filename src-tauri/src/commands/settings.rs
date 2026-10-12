@@ -17,6 +17,19 @@ pub struct AppSettings {
     pub show_docker: bool,
     #[serde(default)]
     pub show_pip: bool,
+    /// Proxy profiles page
+    #[serde(default = "default_true")]
+    pub show_proxy: bool,
+    /// Environment variables page (Windows)
+    #[serde(default)]
+    pub show_env: bool,
+    #[serde(default)]
+    pub show_rust: bool,
+    #[serde(default)]
+    pub show_go: bool,
+    /// WSL page (Windows)
+    #[serde(default)]
+    pub show_wsl: bool,
 }
 
 fn default_true() -> bool {
@@ -33,6 +46,11 @@ impl Default for AppSettings {
             show_npm: false,
             show_docker: false,
             show_pip: false,
+            show_proxy: true,
+            show_env: false,
+            show_rust: false,
+            show_go: false,
+            show_wsl: false,
         }
     }
 }

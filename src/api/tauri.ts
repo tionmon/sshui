@@ -137,6 +137,13 @@ export interface AppSettings {
   show_npm?: boolean
   show_docker?: boolean
   show_pip?: boolean
+  /** Proxy profiles page (missing → true) */
+  show_proxy?: boolean
+  /** Environment variables and WSL pages are Windows only */
+  show_env?: boolean
+  show_rust?: boolean
+  show_go?: boolean
+  show_wsl?: boolean
 }
 
 export const loadSettings = (): Promise<AppSettings> =>
@@ -244,6 +251,12 @@ export interface DevTools {
   npm: ToolPresence
   docker: ToolPresence
   python: ToolPresence
+  git: ToolPresence
+  /** cargo or rustup */
+  rust: ToolPresence
+  go: ToolPresence
+  /** Windows only */
+  wsl: ToolPresence
 }
 
 export interface NpmInfo {
@@ -307,3 +320,130 @@ export const dockerLogin = (server: string, username: string, password: string):
 export const dockerLogout = (server: string): Promise<void> => invoke('docker_logout', { server })
 export const dockerSetMirrors = (mirrors: string[]): Promise<void> => invoke('docker_set_mirrors', { mirrors })
 export const testUrl = (url: string, proxy: string | null = null): Promise<UrlTestResult> => invoke('test_url', { url, proxy })
+
+// Proxy profiles
+export interface ProxyProfile {
+  id: string
+  name: string
+  url: string
+  no_proxy: string
+}
+
+export type ProxyTarget = 'git' | 'npm' | 'pip' | 'cargo' | 'env' | 'system'
+
+export interface ProxyTargetStatus {
+  id: ProxyTarget
+  available: boolean
+  included: boolean
+  current: string | null
+  location: string
+}
+
+export interface ProxyState {
+  profiles: ProxyProfile[]
+  active_id: string | null
+  targets: ProxyTargetStatus[]
+}
+
+export interface ProxyApplyResult {
+  target: ProxyTarget
+  ok: boolean
+  message: string
+}
+
+/** The built-in "no proxy" profile id */
+export const PROXY_DIRECT_ID = 'direct'
+export const PROXY_STATE_CHANGED_EVENT = 'proxy-state-changed'
+
+export const proxyState = (): Promise<ProxyState> => invoke('proxy_state')
+export const proxySaveProfile = (profile: { id?: string; name: string; url: string; no_proxy: string }): Promise<ProxyProfile> =>
+  invoke('proxy_save_profile', { id: profile.id ?? null, name: profile.name, url: profile.url, noProxy: profile.no_proxy })
+export const proxyDeleteProfile = (id: string): Promise<void> => invoke('proxy_delete_profile', { id })
+export const proxySetTargets = (targets: ProxyTarget[]): Promise<void> => invoke('proxy_set_targets', { targets })
+export const proxyApply = (id: string): Promise<ProxyApplyResult[]> => invoke('proxy_apply', { id })
+
+// Environment variables (Windows)
+export interface EnvVar {
+  name: string
+  value: string
+  expand: boolean
+}
+
+export interface PathEntry {
+  value: string
+  expanded: string
+  exists: boolean
+}
+
+export interface EnvState {
+  user: EnvVar[]
+  system: EnvVar[]
+  user_path: PathEntry[]
+  system_path: PathEntry[]
+  backup_dir: string
+}
+
+export const envState = (): Promise<EnvState> => invoke('env_state')
+export const envSetVar = (name: string, value: string | null): Promise<void> => invoke('env_set_var', { name, value })
+export const envSetUserPath = (entries: string[]): Promise<void> => invoke('env_set_user_path', { entries })
+export const envOpenDialog = (): Promise<void> => invoke('env_open_dialog')
+
+// Rust
+export interface RustInfo {
+  cargo_version: string | null
+  rustup_version: string | null
+  toolchains: { name: string; default: boolean }[]
+  config_path: string
+  config_exists: boolean
+  registry_mirror: string | null
+  replaced_with: string | null
+  http_proxy: string | null
+  check_revoke: boolean | null
+  git_fetch_with_cli: boolean | null
+  token: string | null
+  credentials_path: string
+  rustup_dist_server: string | null
+  rustup_update_root: string | null
+  env_overrides: Record<string, string>
+}
+
+export const rustInfo = (): Promise<RustInfo> => invoke('rust_info')
+export const rustSetMirror = (url: string | null): Promise<void> => invoke('rust_set_mirror', { url })
+export const rustSetConfig = (key: string, value: string | null): Promise<void> => invoke('rust_set_config', { key, value })
+export const rustSetToken = (token: string | null): Promise<void> => invoke('rust_set_token', { token })
+export const rustSetRustupMirror = (distServer: string | null, updateRoot: string | null): Promise<void> =>
+  invoke('rust_set_rustup_mirror', { distServer, updateRoot })
+
+// Go
+export interface GoInfo {
+  version: string | null
+  gopath: string | null
+  goroot: string | null
+  gomodcache: string | null
+  config_path: string
+  config_exists: boolean
+  goproxy: string | null
+  gosumdb: string | null
+  goprivate: string | null
+  gotoolchain: string | null
+  env_overrides: Record<string, string>
+}
+
+export const goInfo = (): Promise<GoInfo> => invoke('go_info')
+export const goSetEnv = (key: string, value: string | null): Promise<void> => invoke('go_set_env', { key, value })
+
+// WSL
+export interface WslInfo {
+  version: string | null
+  distros: { name: string; version: number; default: boolean; base_path: string | null }[]
+  config_path: string
+  config_exists: boolean
+  /** "section.key" → value */
+  settings: Record<string, string>
+}
+
+export const wslInfo = (): Promise<WslInfo> => invoke('wsl_info')
+export const wslSetConfig = (section: string, key: string, value: string | null): Promise<void> =>
+  invoke('wsl_set_config', { section, key, value })
+export const wslShutdown = (): Promise<void> => invoke('wsl_shutdown')
+export const wslSetDefault = (name: string): Promise<void> => invoke('wsl_set_default', { name })

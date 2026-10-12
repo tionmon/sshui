@@ -124,7 +124,7 @@ fn gh_status() -> GhStatus {
     GhStatus { installed: true, version, accounts }
 }
 
-fn git_config(key: &str) -> Option<String> {
+pub(super) fn git_config(key: &str) -> Option<String> {
     run("git", &["config", "--global", "--get", key]).and_then(|o| stdout_text(&o))
 }
 
@@ -417,7 +417,7 @@ pub async fn github_trust_host_keys() -> Result<usize, String> {
 
 // ── Git identity and proxy ────────────────────────────────────────────────────
 
-fn git_set(key: &str, value: Option<&str>) -> Result<(), String> {
+pub(super) fn git_set(key: &str, value: Option<&str>) -> Result<(), String> {
     let output = match value.map(str::trim).filter(|v| !v.is_empty()) {
         Some(v) => run("git", &["config", "--global", key, v]),
         None => run("git", &["config", "--global", "--unset-all", key]),
@@ -455,7 +455,7 @@ pub async fn github_set_git_proxy(proxy: Option<String>) -> Result<(), String> {
 }
 
 /// `host:port` of a proxy URL such as `http://127.0.0.1:7890` or `socks5://host:1080`.
-fn proxy_address(proxy: &str) -> Result<(String, u16), String> {
+pub(super) fn proxy_address(proxy: &str) -> Result<(String, u16), String> {
     let without_scheme = proxy.split("://").nth(1).unwrap_or(proxy);
     let authority = without_scheme.split('/').next().unwrap_or_default();
     let host_port = authority.rsplit('@').next().unwrap_or_default();

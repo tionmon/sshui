@@ -1,6 +1,6 @@
 import { Box, Button, Chip } from '@mui/material'
 import { Speed } from '@mui/icons-material'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { testUrl, type UrlTestResult } from '../../api/tauri'
 import { Section, Row } from '../SettingsSection'
@@ -21,10 +21,27 @@ interface MirrorPickerProps {
   onSave: (url: string | null) => Promise<void>
   customLabel: string
   customDescription: string
+  /** Validation for the custom URL (default: an http(s) URL) */
+  validate?: (value: string) => string | null
+  customPlaceholder?: string
+  /** Shown above the presets, e.g. a warning */
+  notice?: ReactNode
 }
 
 /** Preset mirrors with one-click switching and a speed test, plus a custom URL field. */
-function MirrorPicker({ title, presets, value, pingUrl, proxy, onSave, customLabel, customDescription }: MirrorPickerProps) {
+function MirrorPicker({
+  title,
+  presets,
+  value,
+  pingUrl,
+  proxy,
+  onSave,
+  customLabel,
+  customDescription,
+  validate,
+  customPlaceholder = 'https://',
+  notice,
+}: MirrorPickerProps) {
   const { t } = useTranslation()
   const [results, setResults] = useState<Record<string, UrlTestResult | null>>({})
   const [testing, setTesting] = useState(false)
@@ -71,6 +88,7 @@ function MirrorPicker({ title, presets, value, pingUrl, proxy, onSave, customLab
         </Button>
       }
     >
+      {notice}
       {presets.map((preset) => {
         const active = sameUrl(preset.url, current)
         return (
@@ -100,8 +118,8 @@ function MirrorPicker({ title, presets, value, pingUrl, proxy, onSave, customLab
         label={customLabel}
         description={customDescription}
         value={custom}
-        placeholder="https://"
-        validate={(v) => (/^https?:\/\/\S+$/.test(v) ? null : t('devtools.invalidUrl'))}
+        placeholder={customPlaceholder}
+        validate={validate ?? ((v) => (/^https?:\/\/\S+$/.test(v) ? null : t('devtools.invalidUrl')))}
         onSave={onSave}
         footer={
           custom && (results[custom] || testing) ? (

@@ -54,3 +54,41 @@ const withSlash = (url: string) => (url.endsWith('/') ? url : `${url}/`)
 export const npmPingUrl = (registry: string) => `${withSlash(registry)}-/ping`
 export const pipPingUrl = (index: string) => `${withSlash(index)}pip/`
 export const dockerPingUrl = (mirror: string) => `${withSlash(mirror)}v2/`
+
+/** WebView2 reports Windows in its user agent. */
+export const IS_WINDOWS = typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
+
+/** crates.io index mirrors (Cargo source replacement). */
+export const CARGO_MIRRORS: Mirror[] = [
+  { name: 'cratesOfficial', url: 'sparse+https://index.crates.io/' },
+  { name: 'rsproxy', url: 'sparse+https://rsproxy.cn/index/' },
+  { name: 'tsinghua', url: 'sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/' },
+  { name: 'ustc', url: 'sparse+https://mirrors.ustc.edu.cn/crates.io-index/' },
+  { name: 'aliyun', url: 'sparse+https://mirrors.aliyun.com/crates.io-index/' },
+]
+
+/** rustup mirrors: RUSTUP_DIST_SERVER with its matching RUSTUP_UPDATE_ROOT. */
+export const RUSTUP_MIRRORS: (Mirror & { updateRoot: string })[] = [
+  { name: 'rustupOfficial', url: 'https://static.rust-lang.org', updateRoot: 'https://static.rust-lang.org/rustup' },
+  { name: 'rsproxy', url: 'https://rsproxy.cn', updateRoot: 'https://rsproxy.cn/rustup' },
+  { name: 'tsinghua', url: 'https://mirrors.tuna.tsinghua.edu.cn/rustup', updateRoot: 'https://mirrors.tuna.tsinghua.edu.cn/rustup/rustup' },
+  { name: 'ustc', url: 'https://mirrors.ustc.edu.cn/rust-static', updateRoot: 'https://mirrors.ustc.edu.cn/rust-static/rustup' },
+  { name: 'aliyun', url: 'https://mirrors.aliyun.com/rustup', updateRoot: 'https://mirrors.aliyun.com/rustup/rustup' },
+]
+
+/** GOPROXY values (with the usual ",direct" fallback). */
+export const GO_PROXIES: Mirror[] = [
+  { name: 'goOfficial', url: 'https://proxy.golang.org,direct' },
+  { name: 'goproxycn', url: 'https://goproxy.cn,direct' },
+  { name: 'goproxyio', url: 'https://goproxy.io,direct' },
+  { name: 'aliyun', url: 'https://mirrors.aliyun.com/goproxy/,direct' },
+  { name: 'tencent', url: 'https://mirrors.cloud.tencent.com/go/,direct' },
+]
+
+export const cargoPingUrl = (index: string) => `${withSlash(index.replace(/^sparse\+/, ''))}config.json`
+export const rustupPingUrl = (dist: string) => `${dist.replace(/\/+$/, '')}/dist/channel-rust-stable.toml.sha256`
+/** First proxy in a GOPROXY list, asked for a tiny module listing. */
+export const goPingUrl = (goproxy: string) => {
+  const first = goproxy.split(/[,|]/).find((p) => /^https?:\/\//.test(p)) ?? 'https://proxy.golang.org'
+  return `${withSlash(first)}golang.org/x/text/@v/list`
+}

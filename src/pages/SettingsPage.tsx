@@ -9,7 +9,8 @@ import { useToast, errorMessage } from '../contexts/ToastContext'
 import PageHeader from '../components/PageHeader'
 import { Section, Row } from '../components/SettingsSection'
 import { FONT_MONO } from '../theme'
-import { useDevTools } from '../lib/devtools'
+import { useDevTools, IS_WINDOWS } from '../lib/devtools'
+import type { DevTools } from '../api/tauri'
 import { openConfigDir, loadSettings, saveSettings, type AppSettings } from '../api/tauri'
 
 function SettingsPage() {
@@ -17,7 +18,16 @@ function SettingsPage() {
   const [backupLimit, setBackupLimit] = useState(10)
   const [confirmDelete, setConfirmDelete] = useState(true)
   const [showGithub, setShowGithub] = useState(true)
-  const [devPages, setDevPages] = useState({ show_npm: false, show_docker: false, show_pip: false })
+  const [devPages, setDevPages] = useState({
+    show_npm: false,
+    show_docker: false,
+    show_pip: false,
+    show_rust: false,
+    show_go: false,
+    show_env: false,
+    show_wsl: false,
+  })
+  const [showProxy, setShowProxy] = useState(true)
   const { data: devTools } = useDevTools()
   const queryClient = useQueryClient()
   const { themeMode, setThemeMode } = useThemeMode()
@@ -33,10 +43,15 @@ function SettingsPage() {
         setBackupLimit(settings.backup_limit)
         setConfirmDelete(settings.confirm_delete)
         setShowGithub(settings.show_github ?? true)
+        setShowProxy(settings.show_proxy ?? true)
         setDevPages({
           show_npm: !!settings.show_npm,
           show_docker: !!settings.show_docker,
           show_pip: !!settings.show_pip,
+          show_rust: !!settings.show_rust,
+          show_go: !!settings.show_go,
+          show_env: !!settings.show_env,
+          show_wsl: !!settings.show_wsl,
         })
       })
       .catch((error) => {
@@ -50,6 +65,7 @@ function SettingsPage() {
       backup_limit: backupLimit,
       confirm_delete: confirmDelete,
       show_github: showGithub,
+      show_proxy: showProxy,
       ...devPages,
       ...updates,
     }
@@ -178,42 +194,61 @@ function SettingsPage() {
             />
           }
         />
+        <Row
+          label={t('settings.showProxy')}
+          description={t('settings.showProxyHelp')}
+          control={
+            <Switch
+              checked={showProxy}
+              onChange={(e) => {
+                setShowProxy(e.target.checked)
+                handleSaveSettings({ show_proxy: e.target.checked })
+              }}
+            />
+          }
+        />
         {(
           [
-            ['show_npm', 'npm', 'npm'],
-            ['show_docker', 'docker', 'Docker'],
-            ['show_pip', 'python', 'Python (pip)'],
-          ] as const
-        ).map(([key, tool, name]) => {
-          const installed = devTools?.[tool].installed
-          return (
-            <Row
-              key={key}
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  {t('settings.showTool', { name })}
-                  {devTools && (
-                    <Chip
-                      label={installed ? t('devtools.installed') : t('devtools.notInstalledShort')}
-                      color={installed ? 'success' : 'default'}
-                    />
-                  )}
-                </Box>
-              }
-              description={t(`settings.${key}Help`)}
-              control={
-                <Switch
-                  checked={devPages[key]}
-                  onChange={(e) => {
-                    const next = { ...devPages, [key]: e.target.checked }
-                    setDevPages(next)
-                    handleSaveSettings(next)
-                  }}
-                />
-              }
-            />
-          )
-        })}
+            ['show_env', null, t('menu.env'), true],
+            ['show_wsl', 'wsl', 'WSL', true],
+            ['show_npm', 'npm', 'npm', false],
+            ['show_docker', 'docker', 'Docker', false],
+            ['show_pip', 'python', 'Python (pip)', false],
+            ['show_rust', 'rust', 'Rust (Cargo, rustup)', false],
+            ['show_go', 'go', 'Go', false],
+          ] as [keyof typeof devPages, keyof DevTools | null, string, boolean][]
+        )
+          .filter(([, , , windowsOnly]) => IS_WINDOWS || !windowsOnly)
+          .map(([key, tool, name]) => {
+            const installed = tool ? devTools?.[tool].installed : undefined
+            return (
+              <Row
+                key={key}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    {t('settings.showTool', { name })}
+                    {devTools && tool && (
+                      <Chip
+                        label={installed ? t('devtools.installed') : t('devtools.notInstalledShort')}
+                        color={installed ? 'success' : 'default'}
+                      />
+                    )}
+                  </Box>
+                }
+                description={t(`settings.${key}Help`)}
+                control={
+                  <Switch
+                    checked={devPages[key]}
+                    onChange={(e) => {
+                      const next = { ...devPages, [key]: e.target.checked }
+                      setDevPages(next)
+                      handleSaveSettings(next)
+                    }}
+                  />
+                }
+              />
+            )
+          })}
       </Section>
 
       <Section title={t('settings.about')}>

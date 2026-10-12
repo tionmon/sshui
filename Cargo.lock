@@ -4459,6 +4459,9 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-dialog",
  "tokio",
+ "toml_edit 0.20.2",
+ "windows-sys 0.61.2",
+ "winreg",
 ]
 
 [[package]]

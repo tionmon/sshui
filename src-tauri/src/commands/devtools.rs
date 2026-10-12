@@ -1,4 +1,5 @@
-//! npm, Docker and pip configuration.
+//! npm, Docker and pip configuration, plus the detection and config-file helpers
+//! shared by the other developer-tool pages.
 //!
 //! Detection only scans PATH — no process is started — so an uninstalled tool costs
 //! nothing. Settings are read from and written to each tool's own config file
@@ -27,6 +28,12 @@ pub struct DevTools {
     pub npm: ToolPresence,
     pub docker: ToolPresence,
     pub python: ToolPresence,
+    pub git: ToolPresence,
+    /// cargo or rustup
+    pub rust: ToolPresence,
+    pub go: ToolPresence,
+    /// Windows only
+    pub wsl: ToolPresence,
 }
 
 #[cfg(windows)]
@@ -56,8 +63,8 @@ fn is_store_alias(_: &Path) -> bool {
 
 /// First match for any of `names` on PATH, preferring real installs over Windows
 /// app execution aliases.
-fn find_in_path(names: &[&str]) -> Option<PathBuf> {
-    let path = std::env::var_os("PATH")?;
+pub(super) fn find_in_path(names: &[&str]) -> Option<PathBuf> {
+    let path = super::userenv::current_path()?;
     let dirs: Vec<PathBuf> = std::env::split_paths(&path).collect();
     let mut alias = None;
     for name in names {
@@ -77,11 +84,11 @@ fn find_in_path(names: &[&str]) -> Option<PathBuf> {
     alias
 }
 
-fn presence(path: Option<PathBuf>) -> ToolPresence {
+pub(super) fn presence(path: Option<PathBuf>) -> ToolPresence {
     ToolPresence { installed: path.is_some(), path: path.map(|p| p.display().to_string()) }
 }
 
-fn npm_bin() -> Option<PathBuf> {
+pub(super) fn npm_bin() -> Option<PathBuf> {
     find_in_path(&["npm"])
 }
 
@@ -89,7 +96,7 @@ fn docker_bin() -> Option<PathBuf> {
     find_in_path(&["docker"])
 }
 
-fn python_bin() -> Option<PathBuf> {
+pub(super) fn python_bin() -> Option<PathBuf> {
     find_in_path(&["python", "python3", "py"])
 }
 
@@ -99,11 +106,15 @@ pub async fn detect_dev_tools() -> Result<DevTools, String> {
         npm: presence(npm_bin()),
         docker: presence(docker_bin()),
         python: presence(python_bin()),
+        git: presence(find_in_path(&["git"])),
+        rust: presence(super::rust::cargo_bin().or_else(super::rust::rustup_bin)),
+        go: presence(super::golang::go_bin()),
+        wsl: presence(super::wsl::wsl_bin()),
     })
     .await
 }
 
-fn tool_version(program: &Path, args: &[&str]) -> Option<String> {
+pub(super) fn tool_version(program: &Path, args: &[&str]) -> Option<String> {
     let mut cmd = command(program);
     cmd.args(args);
     run_with_timeout(cmd, Duration::from_secs(15))
@@ -113,11 +124,11 @@ fn tool_version(program: &Path, args: &[&str]) -> Option<String> {
         .and_then(|s| s.lines().next().map(str::to_string))
 }
 
-fn home() -> Result<PathBuf, String> {
+pub(super) fn home() -> Result<PathBuf, String> {
     dirs::home_dir().ok_or_else(|| "Failed to get home directory".to_string())
 }
 
-fn write_file(path: &Path, content: &str) -> Result<(), String> {
+pub(super) fn write_file(path: &Path, content: &str) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
@@ -130,20 +141,18 @@ fn write_file(path: &Path, content: &str) -> Result<(), String> {
     })
 }
 
-fn env_overrides(names: &[&str]) -> BTreeMap<String, String> {
+pub(super) fn env_overrides(names: &[&str]) -> BTreeMap<String, String> {
     names
         .iter()
         .filter_map(|name| {
-            std::env::var(name)
-                .or_else(|_| std::env::var(name.to_uppercase()))
-                .ok()
-                .filter(|v| !v.is_empty())
+            super::userenv::effective_var(name)
+                .or_else(|| super::userenv::effective_var(&name.to_uppercase()))
                 .map(|v| (name.to_string(), v))
         })
         .collect()
 }
 
-fn validate_url(value: &str, schemes: &[&str]) -> Result<(), String> {
+pub(super) fn validate_url(value: &str, schemes: &[&str]) -> Result<(), String> {
     let ok = schemes.iter().any(|s| value.starts_with(&format!("{}://", s)))
         && value.split("://").nth(1).is_some_and(|rest| !rest.is_empty() && !rest.contains(char::is_whitespace));
     if ok {
@@ -178,7 +187,7 @@ fn section_name(line: &str) -> Option<&str> {
 
 /// Read `key = value` pairs of one section (`None` = before any section). Indented
 /// continuation lines are joined with '\n'. Keys keep their original spelling.
-fn ini_read(content: &str, section: Option<&str>) -> Vec<(String, String)> {
+pub(super) fn ini_read(content: &str, section: Option<&str>) -> Vec<(String, String)> {
     let mut out: Vec<(String, String)> = Vec::new();
     let mut current: Option<String> = None;
     let mut last_in_section = false;
@@ -210,7 +219,7 @@ fn ini_read(content: &str, section: Option<&str>) -> Vec<(String, String)> {
     out
 }
 
-fn ini_get(entries: &[(String, String)], key: &str) -> Option<String> {
+pub(super) fn ini_get(entries: &[(String, String)], key: &str) -> Option<String> {
     entries
         .iter()
         .rev()
@@ -221,7 +230,7 @@ fn ini_get(entries: &[(String, String)], key: &str) -> Option<String> {
 
 /// Set (or remove, with `None`) a key in one section, keeping every other line,
 /// comment and the key's position. Duplicates and continuation lines are removed.
-fn ini_set(content: &str, section: Option<&str>, key: &str, value: Option<&str>, sep: &str) -> String {
+pub(super) fn ini_set(content: &str, section: Option<&str>, key: &str, value: Option<&str>, sep: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     let mut out: Vec<String> = Vec::with_capacity(lines.len() + 2);
     let mut current: Option<String> = None;
@@ -283,7 +292,7 @@ fn ini_set(content: &str, section: Option<&str>, key: &str, value: Option<&str>,
     text
 }
 
-fn mask(secret: &str) -> String {
+pub(super) fn mask(secret: &str) -> String {
     let chars: Vec<char> = secret.chars().collect();
     if chars.len() <= 12 {
         "••••••".to_string()
@@ -325,7 +334,7 @@ pub struct NpmInfo {
     pub env_overrides: BTreeMap<String, String>,
 }
 
-fn npmrc_path() -> Result<PathBuf, String> {
+pub(super) fn npmrc_path() -> Result<PathBuf, String> {
     match std::env::var_os("NPM_CONFIG_USERCONFIG").or_else(|| std::env::var_os("npm_config_userconfig")) {
         Some(p) if !p.is_empty() => Ok(PathBuf::from(p)),
         _ => Ok(home()?.join(".npmrc")),
@@ -352,7 +361,7 @@ fn npm_auths(entries: &[(String, String)]) -> Vec<NpmAuth> {
     out
 }
 
-fn read_npmrc() -> Result<(PathBuf, String), String> {
+pub(super) fn read_npmrc() -> Result<(PathBuf, String), String> {
     let path = npmrc_path()?;
     let content = fs::read_to_string(&path).unwrap_or_default();
     Ok((path, content))
@@ -504,7 +513,7 @@ pub struct PipInfo {
 
 /// The per-user pip config file. An existing file wins; otherwise the current
 /// recommended location is used.
-fn pip_config_path() -> Result<PathBuf, String> {
+pub(super) fn pip_config_path() -> Result<PathBuf, String> {
     if let Some(p) = std::env::var_os("PIP_CONFIG_FILE").filter(|p| !p.is_empty() && p != "os.devnull") {
         return Ok(PathBuf::from(p));
     }
@@ -538,7 +547,7 @@ fn pip_config_path() -> Result<PathBuf, String> {
         .unwrap_or_else(|| candidates[0].clone()))
 }
 
-fn split_list(value: Option<String>) -> Vec<String> {
+pub(super) fn split_list(value: Option<String>) -> Vec<String> {
     value
         .map(|v| v.split_whitespace().map(str::to_string).collect())
         .unwrap_or_default()
@@ -648,7 +657,7 @@ fn docker_daemon_path() -> Result<PathBuf, String> {
     }
 }
 
-fn read_json(path: &Path) -> Result<Map<String, Value>, String> {
+pub(super) fn read_json(path: &Path) -> Result<Map<String, Value>, String> {
     match fs::read_to_string(path) {
         Ok(text) if text.trim().is_empty() => Ok(Map::new()),
         Ok(text) => match serde_json::from_str::<Value>(&text) {

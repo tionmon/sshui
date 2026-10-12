@@ -36,6 +36,18 @@
   - 仅在需要时请求管理员权限（UAC / macOS 授权 / pkexec）
   - 每次切换前自动备份原 hosts 文件并刷新 DNS 缓存
 
+- **🌐 代理方案**
+  - 保存多个代理（如本地 Clash 端口、公司代理），在应用内或托盘中一键切换
+  - 同时应用到 git、npm、pip、Cargo、HTTP(S)_PROXY 环境变量和 Windows 系统代理
+  - 显示各工具是否与当前方案一致
+
+- **🧰 开发与系统工具**（可在 设置 → 高级 中分别显示或隐藏）
+  - GitHub：gh 登录、SSH 连通性测试、git 身份与代理
+  - npm、pip、Cargo/rustup、Go：镜像源（含测速）、代理与令牌
+  - Docker：镜像仓库登录与 Docker Hub 加速镜像
+  - Windows：用户 PATH 与环境变量编辑、WSL（.wslconfig）设置与发行版
+  - 未安装的工具显示“未安装”视图，不会读取或启动它们
+
 - **🌍 多语言支持**
   - 英文 / 中文
   - 自动检测系统语言
@@ -100,7 +112,7 @@ _以下截图为界面重设计之前的版本，后续将更新。_
 **前置要求：**
 - Node.js 20+
 - pnpm 8+
-- Rust 1.70+
+- Rust 1.88+
 - 平台特定依赖：
   - **macOS**：Xcode 命令行工具、`create-dmg`（`brew install create-dmg`）
   - **Linux**：`libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf`

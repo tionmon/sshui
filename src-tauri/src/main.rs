@@ -5,7 +5,7 @@
 mod commands;
 mod tray;
 
-use commands::{config, keys, backup, system, settings, hosts_file, github, devtools};
+use commands::{config, keys, backup, system, settings, hosts_file, github, devtools, userenv, proxy, rust, golang, wsl};
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
@@ -99,6 +99,26 @@ fn main() {
             devtools::docker_logout,
             devtools::docker_set_mirrors,
             devtools::test_url,
+            userenv::env_state,
+            userenv::env_set_var,
+            userenv::env_set_user_path,
+            userenv::env_open_dialog,
+            proxy::proxy_state,
+            proxy::proxy_save_profile,
+            proxy::proxy_delete_profile,
+            proxy::proxy_set_targets,
+            proxy::proxy_apply,
+            rust::rust_info,
+            rust::rust_set_mirror,
+            rust::rust_set_config,
+            rust::rust_set_token,
+            rust::rust_set_rustup_mirror,
+            golang::go_info,
+            golang::go_set_env,
+            wsl::wsl_info,
+            wsl::wsl_set_config,
+            wsl::wsl_shutdown,
+            wsl::wsl_set_default,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -17,6 +17,16 @@ ssh-at-storage = { workspace = true }
 dirs = "6.0.0"
 tauri-plugin-clipboard-manager = "2.3.2"
 image = "0.25"
+toml_edit = "0.20"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Networking_WinInet",
+  "Win32_System_Environment",
+  "Win32_UI_WindowsAndMessaging",
+] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3", features = ["NSApplication"] }

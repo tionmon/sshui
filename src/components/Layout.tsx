@@ -14,6 +14,11 @@ import {
   LightModeOutlined,
   DarkModeOutlined,
   ContrastOutlined,
+  RouterOutlined,
+  TuneOutlined,
+  PrecisionManufacturingOutlined,
+  CodeOutlined,
+  TerminalOutlined,
 } from '@mui/icons-material'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -31,6 +36,12 @@ import GithubPage from '../pages/GithubPage'
 import NpmPage from '../pages/NpmPage'
 import DockerPage from '../pages/DockerPage'
 import PipPage from '../pages/PipPage'
+import ProxyPage from '../pages/ProxyPage'
+import EnvPage from '../pages/EnvPage'
+import RustPage from '../pages/RustPage'
+import GoPage from '../pages/GoPage'
+import WslPage from '../pages/WslPage'
+import { IS_WINDOWS } from '../lib/devtools'
 
 const sidebarWidth = 232
 
@@ -96,6 +107,14 @@ function Layout() {
     { text: 'npm', icon: <Inventory2Outlined />, path: '/npm', show: !!settings?.show_npm },
     { text: 'Docker', icon: <ViewInArOutlined />, path: '/docker', show: !!settings?.show_docker },
     { text: 'Python', icon: <IntegrationInstructionsOutlined />, path: '/pip', show: !!settings?.show_pip },
+    { text: 'Rust', icon: <PrecisionManufacturingOutlined />, path: '/rust', show: !!settings?.show_rust },
+    { text: 'Go', icon: <CodeOutlined />, path: '/go', show: !!settings?.show_go },
+  ].filter((item) => item.show)
+
+  const systemItems = [
+    { text: t('menu.proxy'), icon: <RouterOutlined />, path: '/proxy', show: settings?.show_proxy ?? true },
+    { text: t('menu.env'), icon: <TuneOutlined />, path: '/env', show: IS_WINDOWS && !!settings?.show_env },
+    { text: 'WSL', icon: <TerminalOutlined />, path: '/wsl', show: IS_WINDOWS && !!settings?.show_wsl },
   ].filter((item) => item.show)
 
   const menuItems = [
@@ -161,21 +180,29 @@ function Layout() {
               />
             ))}
           </List>
-          {devItems.length > 0 && (
-            <>
-              <GroupLabel sx={{ mt: 1.5 }}>{t('menu.groupDeveloper')}</GroupLabel>
-              <List disablePadding>
-                {devItems.map((item) => (
-                  <NavItem
-                    key={item.path}
-                    icon={item.icon}
-                    label={item.text}
-                    active={location.pathname === item.path}
-                    onClick={() => navigate(item.path)}
-                  />
-                ))}
-              </List>
-            </>
+          {(
+            [
+              [t('menu.groupSystem'), systemItems],
+              [t('menu.groupDeveloper'), devItems],
+            ] as const
+          ).map(
+            ([label, items]) =>
+              items.length > 0 && (
+                <Box key={label}>
+                  <GroupLabel sx={{ mt: 1.5 }}>{label}</GroupLabel>
+                  <List disablePadding>
+                    {items.map((item) => (
+                      <NavItem
+                        key={item.path}
+                        icon={item.icon}
+                        label={item.text}
+                        active={location.pathname === item.path}
+                        onClick={() => navigate(item.path)}
+                      />
+                    ))}
+                  </List>
+                </Box>
+              ),
           )}
         </Box>
 
@@ -207,6 +234,11 @@ function Layout() {
             <Route path="/npm" element={<NpmPage />} />
             <Route path="/docker" element={<DockerPage />} />
             <Route path="/pip" element={<PipPage />} />
+            <Route path="/rust" element={<RustPage />} />
+            <Route path="/go" element={<GoPage />} />
+            <Route path="/proxy" element={<ProxyPage />} />
+            <Route path="/env" element={<EnvPage />} />
+            <Route path="/wsl" element={<WslPage />} />
             <Route path="/backups" element={<BackupsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
