@@ -8,10 +8,12 @@ use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
-use std::process::{Child, Command, Output, Stdio};
+use std::process::{Child, Stdio};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
+
+use super::proc::{blocking, command, open_url, run, run_with_timeout, stdout_text};
 
 /// Emitted during `github_login` with `{ code, url }` once gh prints the device code.
 pub const LOGIN_CODE_EVENT: &str = "github-login-code";
@@ -19,53 +21,6 @@ pub const LOGIN_CODE_EVENT: &str = "github-login-code";
 const DEVICE_URL: &str = "https://github.com/login/device";
 
 static LOGIN_CHILD: Mutex<Option<Child>> = Mutex::new(None);
-
-fn command(program: &str) -> Command {
-    let mut cmd = Command::new(program);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
-    // Never let git/gh/ssh wait on a prompt nobody can see
-    cmd.env("GIT_TERMINAL_PROMPT", "0").env("GH_PROMPT_DISABLED", "1").stdin(Stdio::null());
-    cmd
-}
-
-fn run(program: &str, args: &[&str]) -> Option<Output> {
-    command(program).args(args).output().ok()
-}
-
-fn stdout_line(output: &Output) -> Option<String> {
-    let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    (!text.is_empty()).then_some(text)
-}
-
-/// Run with a deadline; the process is killed when it overruns.
-fn run_with_timeout(mut cmd: Command, timeout: Duration) -> Result<Output, String> {
-    let mut child = cmd
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| e.to_string())?;
-    let start = Instant::now();
-    loop {
-        match child.try_wait().map_err(|e| e.to_string())? {
-            Some(_) => return child.wait_with_output().map_err(|e| e.to_string()),
-            None if start.elapsed() > timeout => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err("timeout".to_string());
-            }
-            None => std::thread::sleep(Duration::from_millis(100)),
-        }
-    }
-}
-
-async fn blocking<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> Result<T, String> {
-    tauri::async_runtime::spawn_blocking(f).await.map_err(|e| e.to_string())
-}
 
 // ── Status ────────────────────────────────────────────────────────────────────
 
@@ -157,7 +112,7 @@ fn parse_gh_accounts(json: &str) -> Vec<GhAccount> {
 
 fn gh_status() -> GhStatus {
     let version = run("gh", &["--version"]).filter(|o| o.status.success()).and_then(|o| {
-        stdout_line(&o).and_then(|s| s.lines().next().map(|l| l.trim_start_matches("gh version ").to_string()))
+        stdout_text(&o).and_then(|s| s.lines().next().map(|l| l.trim_start_matches("gh version ").to_string()))
     });
     if version.is_none() {
         return GhStatus { installed: false, version: None, accounts: Vec::new() };
@@ -170,16 +125,16 @@ fn gh_status() -> GhStatus {
 }
 
 fn git_config(key: &str) -> Option<String> {
-    run("git", &["config", "--global", "--get", key]).and_then(|o| stdout_line(&o))
+    run("git", &["config", "--global", "--get", key]).and_then(|o| stdout_text(&o))
 }
 
 fn git_status() -> GitStatus {
     let version = run("git", &["--version"])
         .filter(|o| o.status.success())
-        .and_then(|o| stdout_line(&o))
+        .and_then(|o| stdout_text(&o))
         .map(|s| s.trim_start_matches("git version ").to_string());
     let credential_helper = run("git", &["config", "--get-urlmatch", "credential.helper", "https://github.com"])
-        .and_then(|o| stdout_line(&o))
+        .and_then(|o| stdout_text(&o))
         .and_then(|s| s.lines().last().map(str::to_string));
     GitStatus {
         installed: version.is_some(),
@@ -217,15 +172,6 @@ pub async fn github_status() -> Result<GithubStatus, String> {
 }
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-
-fn open_url(url: &str) {
-    #[cfg(windows)]
-    let _ = command("rundll32").args(["url.dll,FileProtocolHandler", url]).spawn();
-    #[cfg(target_os = "macos")]
-    let _ = Command::new("open").arg(url).spawn();
-    #[cfg(all(unix, not(target_os = "macos")))]
-    let _ = Command::new("xdg-open").arg(url).spawn();
-}
 
 /// Remove ANSI colour sequences (ESC [ ... letter).
 fn strip_ansi(s: &str) -> String {

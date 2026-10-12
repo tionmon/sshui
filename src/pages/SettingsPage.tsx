@@ -1,4 +1,4 @@
-import { Box, Button, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Box, Button, Chip, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { ContrastOutlined, DarkModeOutlined, LightModeOutlined, FolderOpenOutlined } from '@mui/icons-material'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,7 @@ import { useToast, errorMessage } from '../contexts/ToastContext'
 import PageHeader from '../components/PageHeader'
 import { Section, Row } from '../components/SettingsSection'
 import { FONT_MONO } from '../theme'
+import { useDevTools } from '../lib/devtools'
 import { openConfigDir, loadSettings, saveSettings, type AppSettings } from '../api/tauri'
 
 function SettingsPage() {
@@ -16,6 +17,8 @@ function SettingsPage() {
   const [backupLimit, setBackupLimit] = useState(10)
   const [confirmDelete, setConfirmDelete] = useState(true)
   const [showGithub, setShowGithub] = useState(true)
+  const [devPages, setDevPages] = useState({ show_npm: false, show_docker: false, show_pip: false })
+  const { data: devTools } = useDevTools()
   const queryClient = useQueryClient()
   const { themeMode, setThemeMode } = useThemeMode()
   const toast = useToast()
@@ -30,6 +33,11 @@ function SettingsPage() {
         setBackupLimit(settings.backup_limit)
         setConfirmDelete(settings.confirm_delete)
         setShowGithub(settings.show_github ?? true)
+        setDevPages({
+          show_npm: !!settings.show_npm,
+          show_docker: !!settings.show_docker,
+          show_pip: !!settings.show_pip,
+        })
       })
       .catch((error) => {
         console.error('Failed to load settings:', error)
@@ -42,6 +50,7 @@ function SettingsPage() {
       backup_limit: backupLimit,
       confirm_delete: confirmDelete,
       show_github: showGithub,
+      ...devPages,
       ...updates,
     }
 
@@ -169,6 +178,42 @@ function SettingsPage() {
             />
           }
         />
+        {(
+          [
+            ['show_npm', 'npm', 'npm'],
+            ['show_docker', 'docker', 'Docker'],
+            ['show_pip', 'python', 'Python (pip)'],
+          ] as const
+        ).map(([key, tool, name]) => {
+          const installed = devTools?.[tool].installed
+          return (
+            <Row
+              key={key}
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  {t('settings.showTool', { name })}
+                  {devTools && (
+                    <Chip
+                      label={installed ? t('devtools.installed') : t('devtools.notInstalledShort')}
+                      color={installed ? 'success' : 'default'}
+                    />
+                  )}
+                </Box>
+              }
+              description={t(`settings.${key}Help`)}
+              control={
+                <Switch
+                  checked={devPages[key]}
+                  onChange={(e) => {
+                    const next = { ...devPages, [key]: e.target.checked }
+                    setDevPages(next)
+                    handleSaveSettings(next)
+                  }}
+                />
+              }
+            />
+          )
+        })}
       </Section>
 
       <Section title={t('settings.about')}>

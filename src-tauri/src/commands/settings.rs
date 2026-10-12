@@ -10,6 +10,13 @@ pub struct AppSettings {
     /// Show the GitHub page in the sidebar
     #[serde(default = "default_true")]
     pub show_github: bool,
+    /// Developer tool pages, off until the user enables them
+    #[serde(default)]
+    pub show_npm: bool,
+    #[serde(default)]
+    pub show_docker: bool,
+    #[serde(default)]
+    pub show_pip: bool,
 }
 
 fn default_true() -> bool {
@@ -23,6 +30,9 @@ impl Default for AppSettings {
             backup_limit: 10,
             confirm_delete: true,
             show_github: true,
+            show_npm: false,
+            show_docker: false,
+            show_pip: false,
         }
     }
 }

@@ -7,6 +7,9 @@ import {
   DataObjectOutlined,
   LanOutlined,
   GitHub,
+  Inventory2Outlined,
+  ViewInArOutlined,
+  IntegrationInstructionsOutlined,
   TerminalRounded,
   LightModeOutlined,
   DarkModeOutlined,
@@ -25,6 +28,9 @@ import SettingsPage from '../pages/SettingsPage'
 import ConfigEditorPage from '../pages/ConfigEditorPage'
 import HostsFilePage from '../pages/HostsFilePage'
 import GithubPage from '../pages/GithubPage'
+import NpmPage from '../pages/NpmPage'
+import DockerPage from '../pages/DockerPage'
+import PipPage from '../pages/PipPage'
 
 const sidebarWidth = 232
 
@@ -58,6 +64,25 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
   )
 }
 
+function GroupLabel({ children, sx }: { children: ReactNode; sx?: object }) {
+  return (
+    <Typography
+      sx={(theme) => ({
+        px: 1,
+        height: 28,
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '0.75rem',
+        fontWeight: 500,
+        color: theme.tokens.sidebarForeground,
+        ...sx,
+      })}
+    >
+      {children}
+    </Typography>
+  )
+}
+
 function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -66,12 +91,18 @@ function Layout() {
   const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: loadSettings })
   const showGithub = settings?.show_github ?? true
 
+  const devItems = [
+    { text: 'GitHub', icon: <GitHub />, path: '/github', show: showGithub },
+    { text: 'npm', icon: <Inventory2Outlined />, path: '/npm', show: !!settings?.show_npm },
+    { text: 'Docker', icon: <ViewInArOutlined />, path: '/docker', show: !!settings?.show_docker },
+    { text: 'Python', icon: <IntegrationInstructionsOutlined />, path: '/pip', show: !!settings?.show_pip },
+  ].filter((item) => item.show)
+
   const menuItems = [
     { text: t('menu.hosts'), icon: <DnsOutlined />, path: '/' },
     { text: t('menu.sshKeys'), icon: <VpnKeyOutlined />, path: '/keys' },
     { text: t('menu.configEditor'), icon: <DataObjectOutlined />, path: '/editor' },
     { text: t('menu.hostsFile'), icon: <LanOutlined />, path: '/hosts-file' },
-    ...(showGithub ? [{ text: 'GitHub', icon: <GitHub />, path: '/github' }] : []),
     { text: t('menu.backups'), icon: <HistoryOutlined />, path: '/backups' },
   ]
 
@@ -117,30 +148,36 @@ function Layout() {
           </Typography>
         </Box>
 
-        <Typography
-          sx={(theme) => ({
-            px: 1,
-            height: 28,
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: theme.tokens.sidebarForeground,
-          })}
-        >
-          {t('menu.groupManage')}
-        </Typography>
-        <List disablePadding sx={{ flex: 1, overflow: 'auto' }}>
-          {menuItems.map((item) => (
-            <NavItem
-              key={item.path}
-              icon={item.icon}
-              label={item.text}
-              active={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            />
-          ))}
-        </List>
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <GroupLabel>{t('menu.groupManage')}</GroupLabel>
+          <List disablePadding>
+            {menuItems.map((item) => (
+              <NavItem
+                key={item.path}
+                icon={item.icon}
+                label={item.text}
+                active={location.pathname === item.path}
+                onClick={() => navigate(item.path)}
+              />
+            ))}
+          </List>
+          {devItems.length > 0 && (
+            <>
+              <GroupLabel sx={{ mt: 1.5 }}>{t('menu.groupDeveloper')}</GroupLabel>
+              <List disablePadding>
+                {devItems.map((item) => (
+                  <NavItem
+                    key={item.path}
+                    icon={item.icon}
+                    label={item.text}
+                    active={location.pathname === item.path}
+                    onClick={() => navigate(item.path)}
+                  />
+                ))}
+              </List>
+            </>
+          )}
+        </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -167,6 +204,9 @@ function Layout() {
             <Route path="/editor" element={<ConfigEditorPage />} />
             <Route path="/hosts-file" element={<HostsFilePage />} />
             <Route path="/github" element={<GithubPage />} />
+            <Route path="/npm" element={<NpmPage />} />
+            <Route path="/docker" element={<DockerPage />} />
+            <Route path="/pip" element={<PipPage />} />
             <Route path="/backups" element={<BackupsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

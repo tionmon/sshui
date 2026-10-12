@@ -133,6 +133,10 @@ export interface AppSettings {
   confirm_delete: boolean
   /** Show the GitHub page in the sidebar (missing in older settings files → true) */
   show_github?: boolean
+  /** Developer tool pages in the sidebar (default off) */
+  show_npm?: boolean
+  show_docker?: boolean
+  show_pip?: boolean
 }
 
 export const loadSettings = (): Promise<AppSettings> =>
@@ -229,3 +233,77 @@ export const githubSetGitIdentity = (name: string, email: string): Promise<void>
 export const githubSetGitProxy = (proxy: string | null): Promise<void> => invoke('github_set_git_proxy', { proxy })
 export const githubTestProxy = (proxy: string | null): Promise<ProxyTestResult> => invoke('github_test_proxy', { proxy })
 export const openExternalUrl = (url: string): Promise<void> => invoke('open_external_url', { url })
+
+// Developer tools (npm, Docker, pip)
+export interface ToolPresence {
+  installed: boolean
+  path: string | null
+}
+
+export interface DevTools {
+  npm: ToolPresence
+  docker: ToolPresence
+  python: ToolPresence
+}
+
+export interface NpmInfo {
+  version: string | null
+  config_path: string
+  config_exists: boolean
+  registry: string | null
+  proxy: string | null
+  https_proxy: string | null
+  noproxy: string | null
+  strict_ssl: string | null
+  scopes: { scope: string; registry: string }[]
+  auths: { registry: string; kind: 'token' | 'basic' | 'password' | 'username'; masked: string }[]
+  env_overrides: Record<string, string>
+}
+
+export interface PipInfo {
+  python_path: string
+  pip_version: string | null
+  config_path: string
+  config_exists: boolean
+  index_url: string | null
+  extra_index_urls: string[]
+  trusted_hosts: string[]
+  proxy: string | null
+  timeout: string | null
+  env_overrides: Record<string, string>
+}
+
+export interface DockerInfo {
+  version: string | null
+  config_path: string
+  config_exists: boolean
+  current_context: string | null
+  creds_store: string | null
+  registries: { server: string; username: string | null; store: string }[]
+  daemon_path: string
+  daemon_exists: boolean
+  registry_mirrors: string[]
+}
+
+export interface UrlTestResult {
+  ok: boolean
+  status: number | null
+  elapsed_ms: number
+  message: string
+}
+
+/** Scans PATH only — no tool is started. */
+export const detectDevTools = (): Promise<DevTools> => invoke('detect_dev_tools')
+export const npmInfo = (): Promise<NpmInfo> => invoke('npm_info')
+export const npmSetConfig = (key: string, value: string | null): Promise<void> => invoke('npm_set_config', { key, value })
+export const npmSetToken = (registry: string, token: string | null): Promise<void> =>
+  invoke('npm_set_token', { registry, token })
+export const npmWhoami = (registry: string | null): Promise<string> => invoke('npm_whoami', { registry })
+export const pipInfo = (): Promise<PipInfo> => invoke('pip_info')
+export const pipSetConfig = (key: string, value: string | null): Promise<void> => invoke('pip_set_config', { key, value })
+export const dockerInfo = (): Promise<DockerInfo> => invoke('docker_info')
+export const dockerLogin = (server: string, username: string, password: string): Promise<void> =>
+  invoke('docker_login', { server, username, password })
+export const dockerLogout = (server: string): Promise<void> => invoke('docker_logout', { server })
+export const dockerSetMirrors = (mirrors: string[]): Promise<void> => invoke('docker_set_mirrors', { mirrors })
+export const testUrl = (url: string, proxy: string | null = null): Promise<UrlTestResult> => invoke('test_url', { url, proxy })

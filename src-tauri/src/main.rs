@@ -5,7 +5,7 @@
 mod commands;
 mod tray;
 
-use commands::{config, keys, backup, system, settings, hosts_file, github};
+use commands::{config, keys, backup, system, settings, hosts_file, github, devtools};
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
@@ -87,6 +87,18 @@ fn main() {
             github::github_set_git_proxy,
             github::github_test_proxy,
             github::open_external_url,
+            devtools::detect_dev_tools,
+            devtools::npm_info,
+            devtools::npm_set_config,
+            devtools::npm_set_token,
+            devtools::npm_whoami,
+            devtools::pip_info,
+            devtools::pip_set_config,
+            devtools::docker_info,
+            devtools::docker_login,
+            devtools::docker_logout,
+            devtools::docker_set_mirrors,
+            devtools::test_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
