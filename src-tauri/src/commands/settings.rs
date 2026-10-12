@@ -35,6 +35,9 @@ pub struct AppSettings {
     pub show_codex: bool,
     #[serde(default)]
     pub show_claude: bool,
+    /// sing-box config editor
+    #[serde(default)]
+    pub show_singbox: bool,
 }
 
 fn default_true() -> bool {
@@ -58,6 +61,7 @@ impl Default for AppSettings {
             show_wsl: false,
             show_codex: false,
             show_claude: false,
+            show_singbox: false,
         }
     }
 }

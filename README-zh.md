@@ -41,6 +41,13 @@
   - 同时应用到 git、npm、pip、Cargo、Claude Code、HTTP(S)_PROXY 环境变量和 Windows 系统代理
   - 显示各工具是否与当前方案一致
 
+- **🕸️ sing-box 配置编辑**（在 设置 → 高级 中启用）
+  - 无需手写 JSON 即可编辑任意 sing-box config.json 中的节点、分组、规则集与路由规则
+  - 导入分享链接（vless、vmess、trojan、ss、hysteria2、tuic、anytls、wireguard 等）或 Base64 订阅内容
+  - 中转（detour）链路预览并防止循环；隐藏或停用节点，之后可恢复
+  - 重命名和删除会同步更新所有引用；编辑时实时提示问题
+  - 保存时显示差异、在可用时运行 `sing-box check`，并保留 `.sshui-bak` 备份
+
 - **🧰 开发与系统工具**（可在 设置 → 高级 中分别显示或隐藏）
   - GitHub：gh 登录、SSH 连通性测试、git 身份与代理
   - npm、pip、Cargo/rustup、Go：镜像源（含测速）、代理与令牌

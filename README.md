@@ -41,6 +41,13 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
   - Applies to git, npm, pip, Cargo, Claude Code, the HTTP(S)_PROXY environment variables and the Windows system proxy
   - Shows which tools match the active profile
 
+- **🕸️ sing-box Config Editor** (enable in Settings → Advanced)
+  - Edit nodes, node groups, rule sets and routing rules of any sing-box config.json without writing JSON
+  - Import share links (vless, vmess, trojan, ss, hysteria2, tuic, anytls, wireguard…) or base64 subscription content
+  - Relay (detour) chains with a preview and loop prevention; hide or disable nodes and bring them back later
+  - Renames and deletes update every reference; problems are flagged while editing
+  - Saving shows a diff, runs `sing-box check` when available and keeps a `.sshui-bak` backup
+
 - **🧰 Developer & System Tools** (each can be shown or hidden in Settings → Advanced)
   - GitHub: gh login, SSH access test, git identity and proxy
   - npm, pip, Cargo/rustup and Go: registry mirrors with speed tests, proxies and tokens

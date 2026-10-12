@@ -146,6 +146,7 @@ export interface AppSettings {
   show_wsl?: boolean
   show_codex?: boolean
   show_claude?: boolean
+  show_singbox?: boolean
 }
 
 export const loadSettings = (): Promise<AppSettings> =>
@@ -559,3 +560,46 @@ export const agentSaveProfile = (agent: AgentId, profile: AgentProfile, apiKey: 
 export const agentDeleteProfile = (agent: AgentId, id: string): Promise<void> => invoke('agent_delete_profile', { agent, id })
 export const agentApplyProfile = (agent: AgentId, id: string): Promise<void> => invoke('agent_apply_profile', { agent, id })
 export const agentImportLive = (agent: AgentId, name: string): Promise<void> => invoke('agent_import_live', { agent, name })
+
+// ── sing-box ─────────────────────────────────────────────────────────────────
+
+export interface SingboxBinary {
+  path: string
+  version: string | null
+}
+export interface SingboxState {
+  recent: { path: string; exists: boolean }[]
+  binary: SingboxBinary | null
+  custom_binary: string | null
+}
+export interface SingboxFile {
+  path: string
+  text: string
+  revision: string
+  meta: unknown
+  binary: SingboxBinary | null
+}
+export interface SingboxCheck {
+  available: boolean
+  ok: boolean
+  output: string
+}
+export interface SingboxSaveResult {
+  status: 'saved' | 'conflict'
+  revision: string
+}
+
+export const singboxState = (): Promise<SingboxState> => invoke('singbox_state')
+export const singboxOpen = (path: string): Promise<SingboxFile> => invoke('singbox_open', { path })
+export const singboxCreate = (path: string, text: string): Promise<SingboxFile> => invoke('singbox_create', { path, text })
+export const singboxCheck = (path: string, text: string): Promise<SingboxCheck> => invoke('singbox_check', { path, text })
+export const singboxSave = (
+  path: string,
+  text: string,
+  meta: unknown,
+  revision: string | null,
+  force = false,
+): Promise<SingboxSaveResult> => invoke('singbox_save', { path, text, meta, revision, force })
+export const singboxForget = (path: string): Promise<void> => invoke('singbox_forget', { path })
+export const singboxRevision = (path: string): Promise<string | null> => invoke('singbox_revision', { path })
+export const singboxSetBinary = (path: string | null): Promise<SingboxBinary | null> => invoke('singbox_set_binary', { path })

@@ -21,6 +21,7 @@ import {
   TerminalOutlined,
   SmartToyOutlined,
   AutoAwesomeOutlined,
+  HubOutlined,
 } from '@mui/icons-material'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -45,6 +46,7 @@ import GoPage from '../pages/GoPage'
 import WslPage from '../pages/WslPage'
 import CodexPage from '../pages/CodexPage'
 import ClaudeCodePage from '../pages/ClaudeCodePage'
+import SingboxPage from '../pages/SingboxPage'
 import { IS_WINDOWS } from '../lib/devtools'
 
 const sidebarWidth = 232
@@ -120,6 +122,7 @@ function Layout() {
   const systemItems = [
     { text: t('menu.proxy'), icon: <RouterOutlined />, path: '/proxy', show: settings?.show_proxy ?? true },
     { text: t('menu.env'), icon: <TuneOutlined />, path: '/env', show: IS_WINDOWS && !!settings?.show_env },
+    { text: 'sing-box', icon: <HubOutlined />, path: '/singbox', show: !!settings?.show_singbox },
     { text: 'WSL', icon: <TerminalOutlined />, path: '/wsl', show: IS_WINDOWS && !!settings?.show_wsl },
   ].filter((item) => item.show)
 
@@ -245,6 +248,7 @@ function Layout() {
             <Route path="/proxy" element={<ProxyPage />} />
             <Route path="/env" element={<EnvPage />} />
             <Route path="/wsl" element={<WslPage />} />
+            <Route path="/singbox" element={<SingboxPage />} />
             <Route path="/codex" element={<CodexPage />} />
             <Route path="/claude" element={<ClaudeCodePage />} />
             <Route path="/backups" element={<BackupsPage />} />

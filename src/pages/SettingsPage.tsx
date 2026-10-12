@@ -28,6 +28,7 @@ function SettingsPage() {
     show_wsl: false,
     show_codex: false,
     show_claude: false,
+    show_singbox: false,
   })
   const [showProxy, setShowProxy] = useState(true)
   const { data: devTools } = useDevTools()
@@ -56,6 +57,7 @@ function SettingsPage() {
           show_wsl: !!settings.show_wsl,
           show_codex: !!settings.show_codex,
           show_claude: !!settings.show_claude,
+          show_singbox: !!settings.show_singbox,
         })
       })
       .catch((error) => {
@@ -214,6 +216,7 @@ function SettingsPage() {
         {(
           [
             ['show_env', null, t('menu.env'), true],
+            ['show_singbox', null, 'sing-box', false],
             ['show_wsl', 'wsl', 'WSL', true],
             ['show_npm', 'npm', 'npm', false],
             ['show_docker', 'docker', 'Docker', false],

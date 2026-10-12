@@ -14,3 +14,4 @@ pub mod golang;
 pub mod wsl;
 pub mod agents;
 pub mod agent_profiles;
+pub mod singbox;

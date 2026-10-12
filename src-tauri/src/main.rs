@@ -5,7 +5,7 @@
 mod commands;
 mod tray;
 
-use commands::{config, keys, backup, system, settings, hosts_file, github, devtools, userenv, proxy, rust, golang, wsl, agents, agent_profiles};
+use commands::{config, keys, backup, system, settings, hosts_file, github, devtools, userenv, proxy, rust, golang, wsl, agents, agent_profiles, singbox};
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
@@ -134,6 +134,14 @@ fn main() {
             agent_profiles::agent_delete_profile,
             agent_profiles::agent_apply_profile,
             agent_profiles::agent_import_live,
+            singbox::singbox_state,
+            singbox::singbox_open,
+            singbox::singbox_create,
+            singbox::singbox_check,
+            singbox::singbox_save,
+            singbox::singbox_forget,
+            singbox::singbox_revision,
+            singbox::singbox_set_binary,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
