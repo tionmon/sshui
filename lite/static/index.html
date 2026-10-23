@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SSHUI Lite</title>
+<meta name="description" content="Web editor for ~/.ssh/config">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff; --fg: #262626; --card: #ffffff; --primary: #262626; --primary-fg: #fafafa;
+  --muted: rgba(0,0,0,.04); --muted-fg: #686868; --border: rgba(0,0,0,.08); --input: rgba(0,0,0,.10);
+  --ring: #a1a1a1; --sidebar: #fafafa; --sidebar-fg: #727272; --sidebar-border: rgba(0,0,0,.06);
+  --surface: #fafafa; --code-hl: #f5f5f5; --destructive: #fb2c36; --destructive-fg: #c10007;
+  --info: #2b7fff; --info-fg: #1447e6; --success: #00bc7d; --success-fg: #007a55;
+  --warning: #fe9a00; --warning-fg: #bb4d00; --edge: 0 1px 0 rgba(0,0,0,.04);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.06);
+  --add-bg: rgba(0,188,125,.10); --del-bg: rgba(251,44,54,.09);
+  --tok-key: #1447e6; --tok-match: #9f2fd0; --tok-bool: #007a55; --tok-num: #bb4d00;
+  --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0a0a; --fg: #f5f5f5; --card: #0f0f0f; --primary: #f5f5f5; --primary-fg: #262626;
+    --muted: rgba(255,255,255,.04); --muted-fg: #818181; --border: rgba(255,255,255,.07); --input: rgba(255,255,255,.09);
+    --ring: #737373; --sidebar: #111111; --sidebar-fg: #a3a3a3; --sidebar-border: rgba(255,255,255,.05);
+    --surface: #171717; --code-hl: #262626; --destructive: #fc4149; --destructive-fg: #ff6467;
+    --info-fg: #51a2ff; --success-fg: #00d492; --warning-fg: #ffb900; --edge: inset 0 1px 0 rgba(255,255,255,.04);
+    --shadow-lg: 0 10px 30px -5px rgba(0,0,0,.6);
+    --add-bg: rgba(0,212,146,.12); --del-bg: rgba(255,100,103,.12);
+    --tok-key: #51a2ff; --tok-match: #c58af9; --tok-bool: #00d492; --tok-num: #ffb900;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0a0a; --fg: #f5f5f5; --card: #0f0f0f; --primary: #f5f5f5; --primary-fg: #262626;
+  --muted: rgba(255,255,255,.04); --muted-fg: #818181; --border: rgba(255,255,255,.07); --input: rgba(255,255,255,.09);
+  --ring: #737373; --sidebar: #111111; --sidebar-fg: #a3a3a3; --sidebar-border: rgba(255,255,255,.05);
+  --surface: #171717; --code-hl: #262626; --destructive: #fc4149; --destructive-fg: #ff6467;
+  --info-fg: #51a2ff; --success-fg: #00d492; --warning-fg: #ffb900; --edge: inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow-lg: 0 10px 30px -5px rgba(0,0,0,.6);
+  --add-bg: rgba(0,212,146,.12); --del-bg: rgba(255,100,103,.12);
+  --tok-key: #51a2ff; --tok-match: #c58af9; --tok-bool: #00d492; --tok-num: #ffb900;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+svg { flex: none; }
+
+.app { display: grid; grid-template-columns: 232px 1fr; height: 100vh; }
+.sidebar { background: var(--sidebar); border-right: 1px solid var(--sidebar-border); display: flex; flex-direction: column; padding: 14px 10px; gap: 4px; min-height: 0; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; }
+.brand .logo { width: 28px; height: 28px; border-radius: 8px; background: var(--primary); color: var(--primary-fg); display: grid; place-items: center; }
+.brand b { font-weight: 600; font-size: 14px; letter-spacing: -.01em; }
+.brand small { display: block; color: var(--muted-fg); font-size: 11.5px; line-height: 1.2; }
+.nav-label { font-size: 11px; font-weight: 500; color: var(--muted-fg); padding: 10px 10px 4px; text-transform: uppercase; letter-spacing: .04em; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: var(--sidebar-fg); cursor: pointer; border: 0; background: none; text-align: left; width: 100%; font-weight: 500; font-size: 13.5px; }
+.nav-item:hover { background: var(--muted); color: var(--fg); }
+.nav-item.active { background: var(--card); color: var(--fg); box-shadow: var(--shadow-xs), 0 0 0 1px var(--border); }
+.nav-item svg { width: 16px; height: 16px; }
+.sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 2px; }
+.status-card { border: 1px solid var(--border); background: var(--card); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; box-shadow: var(--edge); }
+.status-card .row { display: flex; justify-content: space-between; gap: 8px; color: var(--muted-fg); }
+.status-card .row span:last-child { color: var(--fg); font-family: var(--mono); font-size: 12px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted-fg); margin-right: 6px; vertical-align: 1px; }
+.dot.ok { background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent); }
+.dot.bad { background: var(--destructive); }
+.seg { display: flex; background: var(--muted); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; border: 0; background: none; padding: 4px 6px; border-radius: 6px; cursor: pointer; color: var(--muted-fg); display: grid; place-items: center; font-size: 12px; font-weight: 500; }
+.seg button.on { background: var(--card); color: var(--fg); box-shadow: var(--shadow-xs), 0 0 0 1px var(--border); }
+.seg svg { width: 14px; height: 14px; }
+
+.main { min-width: 0; min-height: 0; overflow: auto; padding: 24px 28px; display: flex; flex-direction: column; }
+.page { display: none; flex-direction: column; min-height: 0; flex: 1; }
+.page.active { display: flex; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.page-head h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; }
+.page-head p { margin: 4px 0 0; color: var(--muted-fg); font-size: 13.5px; max-width: 640px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--input); background: var(--card); cursor: pointer; font-weight: 500; font-size: 13px; box-shadow: var(--shadow-xs); white-space: nowrap; }
+.btn:hover:not(:disabled) { background: var(--surface); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn svg { width: 15px; height: 15px; }
+.btn.primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
+.btn.primary:hover:not(:disabled) { opacity: .9; background: var(--primary); }
+.btn.danger { color: var(--destructive-fg); }
+.btn.ghost { border-color: transparent; box-shadow: none; background: none; }
+.btn.ghost:hover:not(:disabled) { background: var(--muted); }
+.icon-btn { width: 30px; height: 30px; padding: 0; justify-content: center; }
+.btn:focus-visible, .nav-item:focus-visible, .file:focus-visible, .seg button:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; background: var(--muted); color: var(--muted-fg); border: 1px solid var(--border); white-space: nowrap; }
+.chip.warn { color: var(--warning-fg); background: color-mix(in srgb, var(--warning) 10%, transparent); border-color: color-mix(in srgb, var(--warning) 25%, transparent); }
+.chip.ok { color: var(--success-fg); background: color-mix(in srgb, var(--success) 10%, transparent); border-color: color-mix(in srgb, var(--success) 25%, transparent); }
+.chip.info { color: var(--info-fg); background: color-mix(in srgb, var(--info) 10%, transparent); border-color: color-mix(in srgb, var(--info) 25%, transparent); }
+.mono { font-family: var(--mono); }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-xs), var(--edge); }
+
+/* Editor */
+.editor-card { display: flex; flex-direction: column; min-width: 0; min-height: 420px; flex: 1; overflow: hidden; }
+.editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.editor-bar .title { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.editor { position: relative; display: flex; flex: 1; min-height: 0; font: 13px/20px var(--mono); tab-size: 4; }
+.gutter { width: 48px; flex: none; padding: 12px 10px 12px 0; text-align: right; color: var(--muted-fg); opacity: .6; overflow: hidden; user-select: none; background: var(--card); border-right: 1px solid var(--border); white-space: pre; }
+.gutter div.err { color: var(--destructive-fg); opacity: 1; font-weight: 600; }
+.code { position: relative; flex: 1; min-width: 0; }
+.code pre, .code textarea { position: absolute; inset: 0; margin: 0; padding: 12px 16px; border: 0; font: inherit; white-space: pre; overflow: auto; tab-size: 4; letter-spacing: 0; }
+.code pre { pointer-events: none; overflow: hidden; color: var(--fg); }
+.code textarea { background: transparent; color: transparent; caret-color: var(--fg); resize: none; outline: none; }
+.code textarea::selection { background: color-mix(in srgb, var(--info) 28%, transparent); color: transparent; }
+.code pre .ln-err { background: var(--del-bg); display: inline-block; min-width: 100%; }
+.t-c { color: var(--muted-fg); font-style: italic; }
+.t-k { color: var(--tok-key); font-weight: 500; }
+.t-m { color: var(--tok-match); font-weight: 600; }
+.t-b { color: var(--tok-bool); }
+.t-n { color: var(--tok-num); }
+.editor-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted-fg); background: var(--surface); flex-wrap: wrap; }
+.result { border-top: 1px solid var(--border); padding: 10px 14px; font-size: 12.5px; display: none; gap: 10px; align-items: flex-start; }
+.result.show { display: flex; }
+.result.ok { background: color-mix(in srgb, var(--success) 6%, transparent); }
+.result.err { background: color-mix(in srgb, var(--destructive) 6%, transparent); }
+.result svg { width: 16px; height: 16px; margin-top: 1px; }
+.result.ok svg { color: var(--success-fg); }
+.result.err svg { color: var(--destructive-fg); }
+.result pre { margin: 4px 0 0; font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; color: var(--muted-fg); max-height: 140px; overflow: auto; }
+.result .x { margin-left: auto; }
+
+/* Host form */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field textarea { width: 100%; min-height: 96px; border: 1px solid var(--input); border-radius: 8px; background: var(--card); padding: 8px 10px; outline: none; font: 12.5px/1.6 var(--mono); resize: vertical; tab-size: 4; }
+.field textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent); }
+.field .req { color: var(--destructive-fg); }
+.form-err { color: var(--destructive-fg); font-size: 12.5px; white-space: pre-wrap; font-family: var(--mono); }
+.host-name { font-weight: 500; font-family: var(--mono); font-size: 13px; }
+.kv td.cell { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.kv td.dim { color: var(--muted-fg); }
+
+
+/* Effective / backups */
+.toolbar { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.search { position: relative; width: 300px; max-width: 100%; }
+.search svg { position: absolute; left: 10px; top: 9px; width: 14px; height: 14px; color: var(--muted-fg); }
+.search input { width: 100%; height: 32px; border: 1px solid var(--input); border-radius: 8px; background: var(--card); padding: 0 10px 0 30px; outline: none; font-size: 13px; }
+.search input:focus, .field input:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent); }
+.kv { width: 100%; border-collapse: collapse; font-size: 13px; }
+.kv th { text-align: left; font-weight: 500; color: var(--muted-fg); font-size: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; }
+.kv td { padding: 7px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.kv tr:last-child td { border-bottom: 0; }
+.kv tbody tr:hover td { background: var(--muted); }
+.kv td.k { font-family: var(--mono); font-size: 12.5px; color: var(--tok-key); width: 34%; }
+.kv td.v { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+.kv td.act { text-align: right; white-space: nowrap; width: 1%; }
+.scroll { overflow: auto; max-height: calc(100vh - 200px); }
+.empty { padding: 48px 16px; text-align: center; color: var(--muted-fg); }
+.empty svg { width: 28px; height: 28px; opacity: .5; margin-bottom: 6px; }
+
+/* Dialogs & toasts */
+dialog { border: 1px solid var(--border); border-radius: 14px; padding: 0; background: var(--card); color: var(--fg); box-shadow: var(--shadow-lg); width: min(860px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog.sm { width: min(420px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(2px); }
+dialog[open] { display: flex; flex-direction: column; }
+.dlg-head { padding: 18px 20px 4px; }
+.dlg-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.dlg-head p { margin: 4px 0 0; color: var(--muted-fg); font-size: 13px; }
+.dlg-body { padding: 12px 20px; overflow: auto; min-height: 0; }
+.dlg-foot { padding: 12px 20px 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.field label { display: block; font-size: 12.5px; font-weight: 500; margin-bottom: 6px; }
+.field input { width: 100%; height: 34px; border: 1px solid var(--input); border-radius: 8px; background: var(--card); padding: 0 10px; outline: none; font-family: var(--mono); font-size: 13px; }
+.field .hint { color: var(--muted-fg); font-size: 12px; margin-top: 6px; }
+.diff { border: 1px solid var(--border); border-radius: 10px; overflow: auto; font: 12.5px/19px var(--mono); max-height: 52vh; background: var(--card); }
+.diff div { white-space: pre; padding: 0 12px 0 0; display: flex; }
+.diff div > i { font-style: normal; width: 44px; flex: none; text-align: right; padding-right: 10px; color: var(--muted-fg); opacity: .6; user-select: none; }
+.diff div > b { font-weight: 400; width: 16px; flex: none; color: var(--muted-fg); user-select: none; }
+.diff .a { background: var(--add-bg); } .diff .a > b { color: var(--success-fg); }
+.diff .d { background: var(--del-bg); } .diff .d > b { color: var(--destructive-fg); }
+.diff .s { color: var(--muted-fg); background: var(--surface); font-style: italic; padding-left: 12px; }
+.notice { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent); background: color-mix(in srgb, var(--warning) 8%, transparent); }
+.notice svg { width: 16px; height: 16px; color: var(--warning-fg); margin-top: 2px; }
+.notice b { font-weight: 600; }
+.toasts { position: fixed; bottom: 18px; right: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 50; max-width: calc(100vw - 36px); }
+.toast { background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow-lg); border-radius: 10px; padding: 10px 14px; font-size: 13px; display: flex; gap: 8px; align-items: center; animation: tin .18s ease-out; max-width: 420px; }
+.toast svg { width: 16px; height: 16px; }
+.toast.ok svg { color: var(--success-fg); } .toast.err svg { color: var(--destructive-fg); }
+@keyframes tin { from { transform: translateY(6px); opacity: 0; } }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.menu-btn { display: none; }
+@media (max-width: 720px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; inset: 0 auto 0 0; width: 252px; z-index: 40; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--shadow-lg); }
+  .app.nav-open .sidebar { transform: none; }
+  .main { padding: 16px; }
+  .menu-btn { display: inline-flex; }
+  .editor-card { min-height: 70vh; }
+  .search { width: 100%; }
+  .form-grid { grid-template-columns: 1fr; }
+  .kv td.k { width: 40%; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8M7 21v-7h10v7"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-check-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-restore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.7 9.7 0 0 0-6.7 2.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></symbol>
+  </defs>
+</svg>
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><svg width="16" height="16"><use href="#i-terminal"/></svg></div>
+      <div><b>SSHUI Lite</b><small data-i18n="brandSub">SSH client config</small></div>
+    </div>
+    <div class="nav-label" data-i18n="navSection">SSH config</div>
+    <button class="nav-item active" data-page="hosts"><svg><use href="#i-server"/></svg><span data-i18n="navHosts">Hosts</span></button>
+    <button class="nav-item" data-page="editor"><svg><use href="#i-file"/></svg><span data-i18n="navEditor">Config editor</span></button>
+    <button class="nav-item" data-page="backups"><svg><use href="#i-history"/></svg><span data-i18n="navBackups">Backups</span></button>
+
+    <div class="sidebar-foot">
+      <div class="status-card">
+        <div class="row"><span data-i18n="stFile">File</span><span id="st-file">…</span></div>
+        <div class="row"><span data-i18n="stHosts">Hosts</span><span id="st-hosts">…</span></div>
+        <div class="row"><span data-i18n="stVersion">OpenSSH</span><span id="st-ver">…</span></div>
+      </div>
+      <div class="seg" id="theme-seg" role="group" aria-label="Theme">
+        <button data-theme="light" title="Light" aria-label="Light"><svg><use href="#i-sun"/></svg></button>
+        <button data-theme="system" title="System" aria-label="System"><svg><use href="#i-monitor"/></svg></button>
+        <button data-theme="dark" title="Dark" aria-label="Dark"><svg><use href="#i-moon"/></svg></button>
+      </div>
+      <div class="seg" id="lang-seg" role="group" aria-label="Language">
+        <button data-lang="en">English</button>
+        <button data-lang="zh">中文</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Hosts -->
+    <section class="page active" id="page-hosts">
+      <div class="page-head">
+        <div>
+          <h1><button class="btn ghost icon-btn menu-btn" data-menu aria-label="Menu"><svg><use href="#i-menu"/></svg></button><span data-i18n="hostsTitle">Hosts</span><span class="chip" id="hosts-count">0</span></h1>
+          <p data-i18n="hostsSub">Host entries in ~/.ssh/config. Changes are checked with ssh -G, backed up, and apply to the next ssh connection.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="hosts-refresh"><svg><use href="#i-refresh"/></svg><span data-i18n="refresh">Refresh</span></button>
+          <button class="btn primary" id="host-add"><svg><use href="#i-plus"/></svg><span data-i18n="addHost">Add host</span></button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <div class="search"><svg><use href="#i-search"/></svg><input id="hosts-q" data-i18n-ph="hostsSearch" placeholder="Search hosts…" autocapitalize="off" spellcheck="false"></div>
+          <span class="chip" id="hosts-match" hidden></span>
+        </div>
+        <div class="scroll">
+          <table class="kv">
+            <thead><tr><th data-i18n="colHost">Host</th><th data-i18n="colHostname">HostName</th><th data-i18n="colUser">User</th><th data-i18n="colPort">Port</th><th data-i18n="colKey">Identity file</th><th data-i18n="colJump">Proxy</th><th></th></tr></thead>
+            <tbody id="hosts-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Editor -->
+    <section class="page" id="page-editor">
+      <div class="page-head">
+        <div>
+          <h1><button class="btn ghost icon-btn menu-btn" data-menu aria-label="Menu"><svg><use href="#i-menu"/></svg></button><span data-i18n="edTitle">Config editor</span></h1>
+          <p data-i18n="edSub">Edit the whole file directly. Saving shows the changes, checks the syntax with ssh -G and keeps a backup.</p>
+        </div>
+      </div>
+      <div class="card editor-card">
+        <div class="editor-bar">
+          <div class="title"><svg width="14" height="14"><use href="#i-file"/></svg><span id="ed-path">~/.ssh/config</span><span class="chip warn" id="ed-dirty" hidden data-i18n="unsaved">Unsaved</span><span class="chip info" id="ed-new" hidden data-i18n="newFileChip">New file</span></div>
+          <div class="actions">
+            <button class="btn" id="btn-revert" disabled><svg><use href="#i-undo"/></svg><span data-i18n="revert">Revert</span></button>
+            <button class="btn" id="btn-validate"><svg><use href="#i-check"/></svg><span data-i18n="validate">Validate</span></button>
+            <button class="btn primary" id="btn-save" disabled><svg><use href="#i-save"/></svg><span data-i18n="save">Save</span></button>
+          </div>
+        </div>
+        <div class="editor">
+          <div class="gutter" id="gutter"></div>
+          <div class="code">
+            <pre id="hl" aria-hidden="true"></pre>
+            <textarea id="ta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="~/.ssh/config"></textarea>
+          </div>
+        </div>
+        <div class="result" id="result">
+          <svg><use href="#i-check-c"/></svg>
+          <div style="min-width:0;flex:1"><div id="result-title"></div><pre id="result-out" hidden></pre></div>
+          <button class="btn ghost icon-btn x" id="result-x" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+        </div>
+        <div class="editor-foot"><span id="ed-meta"></span><span id="ed-pos"></span></div>
+      </div>
+    </section>
+
+    <!-- Backups -->
+    <section class="page" id="page-backups">
+      <div class="page-head">
+        <div>
+          <h1><button class="btn ghost icon-btn menu-btn" data-menu aria-label="Menu"><svg><use href="#i-menu"/></svg></button><span data-i18n="bkTitle">Backups</span></h1>
+          <p data-i18n="bkSub">A copy of ~/.ssh/config is taken automatically before every change.</p>
+        </div>
+        <div class="actions"><button class="btn" id="bk-refresh"><svg><use href="#i-refresh"/></svg><span data-i18n="refresh">Refresh</span></button></div>
+      </div>
+      <div class="card">
+        <div class="scroll"><table class="kv"><thead><tr><th data-i18n="time">Time</th><th data-i18n="size">Size</th><th></th></tr></thead><tbody id="bk-body"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="dlg-host">
+  <form id="host-form" novalidate>
+    <div class="dlg-head"><h2 id="host-title"></h2><p data-i18n="hostDlgSub">Saved as a Host block in ~/.ssh/config.</p></div>
+    <div class="dlg-body">
+      <div class="form-grid">
+        <div class="field full"><label for="f-host"><span data-i18n="fHost">Host alias</span> <span class="req">*</span></label><input id="f-host" placeholder="myserver" autocapitalize="off" spellcheck="false"><div class="hint" data-i18n="fHostHint">The name you type after ssh. Several names or patterns separated by spaces are allowed (e.g. web-* *.lan).</div></div>
+        <div class="field"><label for="f-hostname" data-i18n="fHostname">HostName</label><input id="f-hostname" placeholder="203.0.113.10" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="f-user" data-i18n="fUser">User</label><input id="f-user" placeholder="root" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="f-port" data-i18n="fPort">Port</label><input id="f-port" placeholder="22" inputmode="numeric"></div>
+        <div class="field"><label for="f-key" data-i18n="fKey">IdentityFile</label><input id="f-key" list="dl-keys" placeholder="~/.ssh/id_ed25519" autocapitalize="off" spellcheck="false"></div>
+        <div class="field full"><label for="f-jump" data-i18n="fJump">ProxyJump</label><input id="f-jump" list="dl-hosts" placeholder="bastion" autocapitalize="off" spellcheck="false"><div class="hint" data-i18n="fJumpHint">Connect through another host first, e.g. bastion or user@jump:22.</div></div>
+        <div class="field full"><label for="f-extra" data-i18n="fExtra">Other options</label><textarea id="f-extra" spellcheck="false" placeholder="ServerAliveInterval 60&#10;ForwardAgent no"></textarea><div class="hint" data-i18n="fExtraHint">One option per line. Comments and options not listed above are kept here as-is.</div></div>
+        <div class="full form-err" id="host-err"></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="btn" type="button" data-close data-i18n="cancel">Cancel</button><button class="btn primary" type="submit" id="host-submit"><svg><use href="#i-save"/></svg><span data-i18n="save">Save</span></button></div>
+  </form>
+</dialog>
+<datalist id="dl-keys"></datalist>
+<datalist id="dl-hosts"></datalist>
+
+<dialog id="dlg-diff">
+  <div class="dlg-head"><h2 id="diff-title"></h2><p id="diff-sub"></p></div>
+  <div class="dlg-body"><div class="diff" id="diff"></div></div>
+  <div class="dlg-foot"><button class="btn" data-close data-i18n="cancel">Cancel</button><button class="btn primary" id="diff-ok"></button></div>
+</dialog>
+
+<dialog id="dlg-confirm" class="sm">
+  <div class="dlg-head"><h2 id="cf-title"></h2><p id="cf-text"></p></div>
+  <div class="dlg-foot" style="border:0"><button class="btn" data-close data-i18n="cancel">Cancel</button><button class="btn primary" id="cf-ok"></button></div>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+const I18N = {
+  en: {
+    brandSub: "SSH client config", navSection: "SSH config", navHosts: "Hosts", navEditor: "Config editor", navBackups: "Backups",
+    stFile: "File", stHosts: "Hosts", stVersion: "OpenSSH", notCreated: "not created",
+    hostsTitle: "Hosts", hostsSub: "Host entries in ~/.ssh/config. Changes are checked with ssh -G, backed up, and apply to the next ssh connection.",
+    refresh: "Refresh", addHost: "Add host", hostsSearch: "Search hosts…", nFound: "{n} found",
+    colHost: "Host", colHostname: "HostName", colUser: "User", colPort: "Port", colKey: "Identity file", colJump: "Proxy",
+    pattern: "pattern", match: "Match", proxyCmd: "ProxyCommand", edit: "Edit", delete: "Delete", openEditor: "Edit in editor",
+    noHosts: "No hosts yet", noHostsHint: "Add your first server, then connect with ssh <alias>.", noMatch: "No hosts match your search",
+    hostDlgSub: "Saved as a Host block in ~/.ssh/config.", newHost: "Add host", editHost: "Edit {h}",
+    fHost: "Host alias", fHostHint: "The name you type after ssh. Several names or patterns separated by spaces are allowed (e.g. web-* *.lan).",
+    fHostname: "HostName", fUser: "User", fPort: "Port", fKey: "IdentityFile", fJump: "ProxyJump", fJumpHint: "Connect through another host first, e.g. bastion or user@jump:22.",
+    fExtra: "Other options", fExtraHint: "One option per line. Comments and options not listed above are kept here as-is.",
+    errAlias: "Host alias is required.", errAliasSpace: "Host alias can't contain quotes or '#'.", errDup: "A Host entry named \"{h}\" already exists.", errPort: "Port must be a number from 1 to 65535.",
+    errDirty: "The config editor has unsaved changes. Save or revert them first.",
+    edTitle: "Config editor", edSub: "Edit the whole file directly. Saving shows the changes, checks the syntax with ssh -G and keeps a backup.",
+    unsaved: "Unsaved", newFileChip: "New file", revert: "Revert", validate: "Validate", save: "Save",
+    bkTitle: "Backups", bkSub: "A copy of ~/.ssh/config is taken automatically before every change.", time: "Time", size: "Size",
+    restore: "Restore", noBackups: "No backups yet. One is created before every change.",
+    cancel: "Cancel", reviewTitle: "Review changes", reviewSub: "~/.ssh/config · +{a} −{d}", applyBtn: "Save", noChanges: "No changes.",
+    restoreTitle: "Restore backup", restoreSub: "Backup from {t} → current ~/.ssh/config · +{a} −{d}", restoreBtn: "Restore",
+    validOk: "Syntax is valid (ssh -G).", validFail: "ssh rejected the configuration — nothing was changed.",
+    saved: "Saved. New ssh connections use it right away.", restored: "Backup restored.", hostDeleted: "Deleted {h}.",
+    bkDeleted: "Backup deleted.", conflict: "The config changed on the server. Refresh and try again.",
+    delHostTitle: "Delete {h}?", delHostText: "The Host block is removed from ~/.ssh/config. A backup is kept.",
+    delBkTitle: "Delete backup?", delBkText: "{id} will be removed permanently.",
+    discardTitle: "Discard changes?", discardText: "Your unsaved edits in the editor will be lost.", discard: "Discard",
+    meta: "{n} lines · mode {m} · {s}", pos: "Ln {l}, Col {c}", loading: "Loading…", reqFail: "Request failed",
+  },
+  zh: {
+    brandSub: "SSH 客户端配置", navSection: "SSH 配置", navHosts: "主机", navEditor: "配置编辑器", navBackups: "备份",
+    stFile: "文件", stHosts: "主机数", stVersion: "OpenSSH", notCreated: "未创建",
+    hostsTitle: "主机", hostsSub: "~/.ssh/config 中的 Host 条目。修改会先用 ssh -G 校验并自动备份，下一次 ssh 连接立即生效。",
+    refresh: "刷新", addHost: "添加主机", hostsSearch: "搜索主机…", nFound: "找到 {n} 个",
+    colHost: "Host", colHostname: "主机地址", colUser: "用户", colPort: "端口", colKey: "密钥文件", colJump: "代理",
+    pattern: "通配", match: "Match", proxyCmd: "ProxyCommand", edit: "编辑", delete: "删除", openEditor: "在编辑器中修改",
+    noHosts: "还没有主机", noHostsHint: "添加第一台服务器后，用 ssh <别名> 连接。", noMatch: "没有匹配的主机",
+    hostDlgSub: "保存为 ~/.ssh/config 中的一个 Host 块。", newHost: "添加主机", editHost: "编辑 {h}",
+    fHost: "主机别名", fHostHint: "ssh 后面输入的名字。可用空格分隔多个名字或通配符（如 web-* *.lan）。",
+    fHostname: "HostName（地址）", fUser: "User（用户）", fPort: "Port（端口）", fKey: "IdentityFile（密钥）", fJump: "ProxyJump（跳板机）", fJumpHint: "先连接另一台主机再跳转，如 bastion 或 user@jump:22。",
+    fExtra: "其他选项", fExtraHint: "每行一个选项。上面未列出的选项和注释会原样保留在这里。",
+    errAlias: "请填写主机别名。", errAliasSpace: "主机别名不能包含引号或 #。", errDup: "已存在名为“{h}”的 Host 条目。", errPort: "端口必须是 1–65535 的数字。",
+    errDirty: "配置编辑器中有未保存的修改，请先保存或还原。",
+    edTitle: "配置编辑器", edSub: "直接编辑整个文件。保存前会显示改动，用 ssh -G 校验语法并保留备份。",
+    unsaved: "未保存", newFileChip: "新文件", revert: "还原", validate: "校验", save: "保存",
+    bkTitle: "备份", bkSub: "每次修改前都会自动备份 ~/.ssh/config。", time: "时间", size: "大小",
+    restore: "恢复", noBackups: "还没有备份，每次修改前会自动创建。",
+    cancel: "取消", reviewTitle: "确认修改", reviewSub: "~/.ssh/config · +{a} −{d}", applyBtn: "保存", noChanges: "没有改动。",
+    restoreTitle: "恢复备份", restoreSub: "{t} 的备份 → 当前 ~/.ssh/config · +{a} −{d}", restoreBtn: "恢复",
+    validOk: "语法有效（ssh -G）。", validFail: "ssh 校验未通过，未做任何修改。",
+    saved: "已保存，新的 ssh 连接立即生效。", restored: "已恢复备份。", hostDeleted: "已删除 {h}。",
+    bkDeleted: "备份已删除。", conflict: "配置已在服务器上被修改，请刷新后重试。",
+    delHostTitle: "删除 {h}？", delHostText: "将从 ~/.ssh/config 中移除这个 Host 块，并保留备份。",
+    delBkTitle: "删除备份？", delBkText: "{id} 将被永久删除。",
+    discardTitle: "放弃修改？", discardText: "编辑器中未保存的修改将会丢失。", discard: "放弃",
+    meta: "{n} 行 · 权限 {m} · {s}", pos: "行 {l}，列 {c}", loading: "加载中…", reqFail: "请求失败",
+  },
+};
+const BLOCK_KEYS = new Set(["host", "match", "include"]);
+const FIELDS = { hostname: "HostName", user: "User", port: "Port", identityfile: "IdentityFile", proxyjump: "ProxyJump" };
+const INDENT = "    ";
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+let lang = store.get("sshui.lang") || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
+const t = (k, vars = {}) => (I18N[lang][k] ?? I18N.en[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? `{${v}}`);
+
+// ---------- state ----------
+const state = { content: "", mtime: null, exists: false, mode: "600", status: null, errLines: new Set() };
+
+// ---------- API ----------
+async function api(path, body) {
+  const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json", "X-SSHUI": "1" }, body: JSON.stringify(body) };
+  const res = await fetch(path, { credentials: "same-origin", ...opts });
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok) {
+    const err = new Error((data && data.error) || `${t("reqFail")} (${res.status})`);
+    err.status = res.status; err.detail = (data && data.detail) || "";
+    throw err;
+  }
+  return data;
+}
+
+function toast(msg, kind = "ok") {
+  const el = document.createElement("div");
+  el.className = `toast ${kind}`;
+  el.innerHTML = `<svg><use href="#${kind === "ok" ? "i-check-c" : "i-alert"}"/></svg><span></span>`;
+  el.lastChild.textContent = msg;
+  $("#toasts").appendChild(el);
+  setTimeout(() => el.remove(), kind === "ok" ? 3500 : 7000);
+}
+
+function busy(btn, on) {
+  btn.disabled = on;
+  const use = btn.querySelector("use");
+  if (!use) return;
+  if (on) { btn.dataset.icon = use.getAttribute("href"); use.setAttribute("href", "#i-loader"); btn.querySelector("svg").classList.add("spin"); }
+  else if (btn.dataset.icon) { use.setAttribute("href", btn.dataset.icon); btn.querySelector("svg").classList.remove("spin"); }
+}
+
+// ---------- ssh_config parsing ----------
+function splitKV(line) {
+  const m = /^\s*([^\s=]+)\s*(?:=\s*|\s+)?(.*?)\s*$/.exec(line);
+  return m ? [m[1], m[2]] : ["", ""];
+}
+const isMeta = (line) => !line.trim() || line.trim().startsWith("#");
+
+// Split the file into a preamble and Host/Match blocks with exact line ranges.
+// A block runs from its comment lines directly above the header (start) to the
+// next block's start (end); `header` is the Host/Match line itself.
+function parseConfig(text) {
+  const lines = text.split("\n");
+  const blocks = [];
+  lines.forEach((line, i) => {
+    if (isMeta(line)) return;
+    const [k, v] = splitKV(line);
+    const kl = k.toLowerCase();
+    if (kl === "host" || kl === "match") blocks.push({ kind: kl === "host" ? "Host" : "Match", value: v, header: i });
+  });
+  blocks.forEach((b, i) => {
+    const floor = i ? blocks[i - 1].header : -1;
+    let s = b.header;
+    while (s - 1 > floor && lines[s - 1].trim().startsWith("#")) s--;
+    b.start = s;
+  });
+  blocks.forEach((b, i) => { b.end = i + 1 < blocks.length ? blocks[i + 1].start : lines.length; });
+  return { lines, blocks: blocks.map((b) => ({ ...b, ...hostFields(lines, b) })) };
+}
+
+function hostFields(lines, b) {
+  const out = { fields: {}, extra: [], trailing: 0 };
+  const body = lines.slice(b.header + 1, b.end);
+  while (body.length && !body[body.length - 1].trim()) { body.pop(); out.trailing++; }
+  for (const line of body) {
+    const [k, v] = splitKV(line);
+    const kl = k.toLowerCase();
+    if (!isMeta(line) && FIELDS[kl] && out.fields[kl] === undefined) out.fields[kl] = v;
+    else out.extra.push(line.replace(/^\s+/, ""));
+  }
+  while (out.extra.length && !out.extra[0].trim()) out.extra.shift();
+  return out;
+}
+
+function hostLines(alias, fields, extra) {
+  const out = [`Host ${alias}`];
+  for (const [k, name] of Object.entries(FIELDS)) if (fields[k]) out.push(`${INDENT}${name} ${fields[k]}`);
+  for (const l of extra) out.push(l.trim() ? INDENT + l.trim() : "");
+  while (out.length > 1 && !out[out.length - 1].trim()) out.pop();
+  return out;
+}
+
+// Replace block b with newLines (keeping its leading comments), delete it
+// (newLines null), or append a new block (b null). Other lines are untouched.
+function withBlock(text, b, newLines) {
+  if (!b) {
+    const base = text.replace(/\s+$/, "");
+    return (base ? base + "\n\n" : "") + newLines.join("\n") + "\n";
+  }
+  const { lines } = parseConfig(text);
+  const res = newLines
+    ? [...lines.slice(0, b.header), ...newLines, ...Array(Math.max(b.trailing, 1)).fill(""), ...lines.slice(b.end)]
+    : [...lines.slice(0, b.start), ...lines.slice(b.end)];
+  const out = res.join("\n").replace(/\n+$/, "");
+  return out ? out + "\n" : "";
+}
+
+function hosts() { return parseConfig(state.content).blocks; }
+const isPattern = (v) => /[*?!]/.test(v) || /\s/.test(v.trim());
+
+// ---------- dialogs ----------
+$$("dialog [data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
+function confirmDialog(title, text, okLabel, danger = false) {
+  return new Promise((resolve) => {
+    const d = $("#dlg-confirm");
+    $("#cf-title").textContent = title; $("#cf-text").textContent = text;
+    const ok = $("#cf-ok"); ok.textContent = okLabel; ok.className = "btn " + (danger ? "danger" : "primary");
+    const onClose = () => { d.removeEventListener("close", onClose); ok.onclick = null; resolve(d.returnValue === "ok"); };
+    ok.onclick = () => d.close("ok");
+    d.returnValue = ""; d.addEventListener("close", onClose); d.showModal();
+  });
+}
+
+function lineDiff(a, b) {
+  const A = a.split("\n"), B = b.split("\n");
+  let s = 0; while (s < A.length && s < B.length && A[s] === B[s]) s++;
+  let ea = A.length, eb = B.length; while (ea > s && eb > s && A[ea - 1] === B[eb - 1]) { ea--; eb--; }
+  const a2 = A.slice(s, ea), b2 = B.slice(s, eb), n = a2.length, m = b2.length;
+  const ops = [];
+  for (let i = 0; i < s; i++) ops.push(["=", A[i], i + 1]);
+  if (n * m > 4e6) { a2.forEach((l, i) => ops.push(["-", l, s + i + 1])); b2.forEach((l, j) => ops.push(["+", l, s + j + 1])); }
+  else {
+    const L = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = a2[i] === b2[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    let i = 0, j = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && a2[i] === b2[j]) { ops.push(["=", a2[i], s + j + 1]); i++; j++; }
+      else if (j < m && (i >= n || L[i][j + 1] >= L[i + 1][j])) { ops.push(["+", b2[j], s + j + 1]); j++; }
+      else { ops.push(["-", a2[i], s + i + 1]); i++; }
+    }
+  }
+  for (let k = 0; k < A.length - ea; k++) ops.push(["=", A[ea + k], eb + k + 1]);
+  return ops;
+}
+
+function renderDiff(ops) {
+  const keep = new Array(ops.length).fill(false);
+  ops.forEach((o, i) => { if (o[0] !== "=") for (let k = Math.max(0, i - 3); k <= Math.min(ops.length - 1, i + 3); k++) keep[k] = true; });
+  let html = "", skipped = 0;
+  const flush = () => { if (skipped) { html += `<div class="s">⋯ ${skipped}</div>`; skipped = 0; } };
+  ops.forEach((o, i) => {
+    if (!keep[i]) { skipped++; return; }
+    flush();
+    html += `<div class="${o[0] === "+" ? "a" : o[0] === "-" ? "d" : ""}"><i>${o[2]}</i><b>${o[0] === "=" ? " " : o[0] === "-" ? "−" : "+"}</b><span>${esc(o[1]) || " "}</span></div>`;
+  });
+  flush();
+  return html;
+}
+
+function reviewDialog({ title, sub, before, after, okLabel }) {
+  return new Promise((resolve) => {
+    const ops = lineDiff(before, after);
+    const a = ops.filter((o) => o[0] === "+").length, d = ops.filter((o) => o[0] === "-").length;
+    $("#diff-title").textContent = title;
+    $("#diff-sub").textContent = sub.replace("{a}", a).replace("{d}", d);
+    $("#diff").innerHTML = a + d ? renderDiff(ops) : `<div class="s">${esc(t("noChanges"))}</div>`;
+    const dlg = $("#dlg-diff"), ok = $("#diff-ok");
+    ok.textContent = okLabel; ok.disabled = !(a + d);
+    const onClose = () => { dlg.removeEventListener("close", onClose); ok.onclick = null; resolve(dlg.returnValue === "ok"); };
+    ok.onclick = () => dlg.close("ok");
+    dlg.returnValue = ""; dlg.addEventListener("close", onClose); dlg.showModal();
+  });
+}
+
+// ---------- load / save ----------
+async function loadConfig() {
+  const d = await api("/api/config");
+  Object.assign(state, { content: d.content, mtime: d.mtime, exists: d.exists, mode: d.mode });
+  if (!editorDirty) setEditor(d.content);
+  renderAll();
+}
+async function loadStatus() {
+  try { state.status = await api("/api/status"); } catch { state.status = null; }
+  $("#dl-keys").innerHTML = (state.status?.keys || []).map((k) => `<option value="${esc(k)}">`).join("");
+  renderStatus();
+}
+
+// Every change goes through: review diff -> server validates with ssh -G -> backup -> write.
+async function commit(next, { title = t("reviewTitle"), okLabel = t("applyBtn"), msg = t("saved") } = {}) {
+  if (!(await reviewDialog({ title, sub: t("reviewSub"), before: state.content, after: next, okLabel }))) return false;
+  try {
+    const r = await api("/api/save", { content: next, mtime: state.mtime });
+    Object.assign(state, { content: next, mtime: r.mtime, exists: true, mode: r.mode });
+    editorDirty = false; setEditor(next); state.errLines.clear();
+    toast(msg); renderAll(); backups = null;
+    return true;
+  } catch (err) {
+    if (err.status === 409) { toast(t("conflict"), "err"); await loadConfig(); }
+    throw err;
+  }
+}
+
+// ---------- hosts page ----------
+function renderHosts() {
+  const all = hosts();
+  const q = $("#hosts-q").value.trim().toLowerCase();
+  const rows = all.filter((b) => !q || [b.value, ...Object.values(b.fields)].some((v) => v && v.toLowerCase().includes(q)));
+  $("#hosts-count").textContent = all.filter((b) => b.kind === "Host").length;
+  $("#hosts-match").hidden = !q; $("#hosts-match").textContent = t("nFound", { n: rows.length });
+  $("#dl-hosts").innerHTML = all.filter((b) => b.kind === "Host" && !isPattern(b.value)).map((b) => `<option value="${esc(b.value)}">`).join("");
+  const body = $("#hosts-body");
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="7" class="empty"><svg><use href="#${q ? "i-search" : "i-server"}"/></svg><div style="font-weight:500;color:var(--fg)">${esc(q ? t("noMatch") : t("noHosts"))}</div>${q ? "" : `<div style="margin:4px 0 12px">${esc(t("noHostsHint"))}</div><button class="btn primary" data-act="add"><svg><use href="#i-plus"/></svg>${esc(t("addHost"))}</button>`}</td></tr>`;
+    return;
+  }
+  const cell = (v) => v ? `<td class="cell" title="${esc(v)}">${esc(v)}</td>` : `<td class="cell dim">—</td>`;
+  body.innerHTML = rows.map((b) => {
+    const i = all.indexOf(b), f = b.fields;
+    const pc = b.extra.some((l) => /^proxycommand\b/i.test(l));
+    const chip = b.kind === "Match" ? `<span class="chip info">${t("match")}</span> ` : isPattern(b.value) ? `<span class="chip">${t("pattern")}</span> ` : "";
+    const proxy = f.proxyjump ? `<td class="cell" title="${esc(f.proxyjump)}"><span class="chip info">${esc(f.proxyjump)}</span></td>` : pc ? `<td class="cell"><span class="chip warn">${t("proxyCmd")}</span></td>` : `<td class="cell dim">—</td>`;
+    const actions = b.kind === "Match"
+      ? `<button class="btn ghost" data-act="editor" data-i="${i}"><svg><use href="#i-file"/></svg>${esc(t("openEditor"))}</button>`
+      : `<button class="btn ghost icon-btn" data-act="edit" data-i="${i}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}"><svg><use href="#i-pencil"/></svg></button>
+         <button class="btn ghost icon-btn danger" data-act="del" data-i="${i}" title="${esc(t("delete"))}" aria-label="${esc(t("delete"))}"><svg><use href="#i-trash"/></svg></button>`;
+    return `<tr><td>${chip}<span class="host-name">${esc(b.value)}</span></td>${cell(f.hostname)}${cell(f.user)}${cell(f.port)}${cell(f.identityfile)}${proxy}<td class="act">${actions}</td></tr>`;
+  }).join("");
+}
+
+$("#hosts-body").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const b = btn.dataset.i !== undefined ? hosts()[+btn.dataset.i] : null;
+  const act = btn.dataset.act;
+  if (act === "add") return openHostDialog(null);
+  if (act === "edit") return openHostDialog(b);
+  if (act === "editor") { showPage("editor"); return jumpToLine(b.start); }
+  if (act === "del") {
+    if (editorDirty) return toast(t("errDirty"), "err");
+    if (!(await confirmDialog(t("delHostTitle", { h: b.value }), t("delHostText"), t("delete"), true))) return;
+    try { await commit(withBlock(state.content, b, null), { okLabel: t("delete"), msg: t("hostDeleted", { h: b.value }) }); }
+    catch (err) { toast(err.message + (err.detail ? `\n${err.detail}` : ""), "err"); }
+  }
+});
+$("#host-add").addEventListener("click", () => openHostDialog(null));
+$("#hosts-q").addEventListener("input", renderHosts);
+$("#hosts-refresh").addEventListener("click", async (e) => { busy(e.currentTarget, true); try { await loadConfig(); } catch (err) { toast(err.message, "err"); } busy(e.currentTarget, false); });
+
+let editing = null;
+function openHostDialog(b) {
+  if (editorDirty) return toast(t("errDirty"), "err");
+  editing = b;
+  const f = b ? b.fields : {};
+  $("#host-title").textContent = b ? t("editHost", { h: b.value }) : t("newHost");
+  $("#f-host").value = b ? b.value : "";
+  $("#f-hostname").value = f.hostname || ""; $("#f-user").value = f.user || ""; $("#f-port").value = f.port || "";
+  $("#f-key").value = f.identityfile || ""; $("#f-jump").value = f.proxyjump || "";
+  $("#f-extra").value = b ? b.extra.join("\n").replace(/\s+$/, "") : "";
+  $("#host-err").textContent = "";
+  $("#dlg-host").showModal(); $("#f-host").focus();
+}
+
+$("#host-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = $("#host-err"); err.textContent = "";
+  const alias = $("#f-host").value.trim().replace(/\s+/g, " ");
+  const port = $("#f-port").value.trim();
+  if (!alias) return (err.textContent = t("errAlias"));
+  if (/["'#]/.test(alias)) return (err.textContent = t("errAliasSpace"));
+  if (port && !(/^\d+$/.test(port) && +port >= 1 && +port <= 65535)) return (err.textContent = t("errPort"));
+  const dup = hosts().find((b) => b.kind === "Host" && b.value.toLowerCase() === alias.toLowerCase() && (!editing || b.start !== editing.start));
+  if (dup) return (err.textContent = t("errDup", { h: alias }));
+  const fields = { hostname: $("#f-hostname").value.trim(), user: $("#f-user").value.trim(), port, identityfile: $("#f-key").value.trim(), proxyjump: $("#f-jump").value.trim() };
+  const extra = $("#f-extra").value.split("\n");
+  const next = withBlock(state.content, editing, hostLines(alias, fields, extra));
+  const btn = $("#host-submit"); busy(btn, true);
+  try { if (await commit(next)) $("#dlg-host").close(); }
+  catch (er) { err.textContent = er.message + (er.detail ? `\n${er.detail}` : ""); }
+  finally { busy(btn, false); }
+});
+
+// ---------- editor ----------
+const ta = $("#ta"), hl = $("#hl"), gutter = $("#gutter");
+let editorDirty = false;
+
+function highlightLine(line, idx) {
+  const [, ws, rest] = /^(\s*)(.*)$/.exec(line);
+  let out;
+  if (!rest) out = esc(line);
+  else if (rest.startsWith("#")) out = esc(ws) + `<span class="t-c">${esc(rest)}</span>`;
+  else {
+    const [, key, val] = /^([^\s=]+)(.*)$/.exec(rest);
+    const v = esc(val)
+      .replace(/(^|[\s=,])(yes|no|ask|accept-new|auto|autoask|none|any|all|always|confirm|force)(?=$|[\s,])/gi, '$1<span class="t-b">$2</span>')
+      .replace(/(^|[\s=,:@])(\d+(?:\.\d+){0,3}[smhdw]?)(?=$|[\s,:])/g, '$1<span class="t-n">$2</span>')
+      .replace(/(\s)(#.*)$/, '$1<span class="t-c">$2</span>');
+    out = esc(ws) + `<span class="${BLOCK_KEYS.has(key.toLowerCase()) ? "t-m" : "t-k"}">${esc(key)}</span>` + v;
+  }
+  return state.errLines.has(idx + 1) ? `<span class="ln-err">${out || " "}</span>` : out;
+}
+function renderEditor() {
+  const lines = ta.value.split("\n");
+  hl.innerHTML = lines.map(highlightLine).join("\n") + "\n\n";
+  gutter.innerHTML = lines.map((_, i) => `<div${state.errLines.has(i + 1) ? ' class="err"' : ""}>${i + 1}</div>`).join("") + "<div>&nbsp;</div>";
+  syncScroll(); updateEditorMeta();
+}
+function syncScroll() { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; }
+function setEditor(text) { ta.value = text; editorDirty = false; renderEditor(); }
+function updateEditorMeta() {
+  editorDirty = ta.value !== state.content;
+  $("#ed-dirty").hidden = !editorDirty; $("#ed-new").hidden = state.exists;
+  $("#btn-save").disabled = !editorDirty; $("#btn-revert").disabled = !editorDirty;
+  $("#ed-meta").textContent = t("meta", { n: ta.value.split("\n").length, m: state.mode, s: fmtSize(new Blob([ta.value]).size) });
+  const before = ta.value.slice(0, ta.selectionStart).split("\n");
+  $("#ed-pos").textContent = t("pos", { l: before.length, c: before[before.length - 1].length + 1 });
+}
+function jumpToLine(i) {
+  const pos = ta.value.split("\n").slice(0, i).join("\n").length + (i ? 1 : 0);
+  ta.focus(); ta.setSelectionRange(pos, pos);
+  ta.scrollTop = Math.max(0, i * 20 - 60); syncScroll(); updateEditorMeta();
+}
+
+ta.addEventListener("input", () => { state.errLines.clear(); renderEditor(); });
+ta.addEventListener("scroll", syncScroll);
+["keyup", "click", "select"].forEach((ev) => ta.addEventListener(ev, updateEditorMeta));
+ta.addEventListener("keydown", (e) => {
+  if (e.key === "Tab" && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); document.execCommand("insertText", false, INDENT); }
+});
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && $("#page-editor").classList.contains("active")) { e.preventDefault(); if (editorDirty) saveEditor(); }
+});
+window.addEventListener("beforeunload", (e) => { if (editorDirty) { e.preventDefault(); e.returnValue = ""; } });
+
+function showResult(ok, title, out = "") {
+  const r = $("#result");
+  r.className = `result show ${ok ? "ok" : "err"}`;
+  r.querySelector("use").setAttribute("href", ok ? "#i-check-c" : "#i-alert");
+  $("#result-title").textContent = title;
+  const pre = $("#result-out"); pre.hidden = !out; pre.textContent = out;
+}
+const hideResult = () => { $("#result").className = "result"; };
+$("#result-x").addEventListener("click", hideResult);
+function markErrors(out) {
+  state.errLines.clear();
+  for (const m of String(out).matchAll(/line (\d+)/g)) state.errLines.add(+m[1]);
+  renderEditor();
+}
+
+$("#btn-validate").addEventListener("click", async (e) => {
+  const btn = e.currentTarget; busy(btn, true);
+  try {
+    const r = await api("/api/validate", { content: ta.value });
+    markErrors(r.ok ? "" : r.output);
+    showResult(r.ok, r.ok ? t("validOk") : t("validFail"), r.output);
+  } catch (err) { showResult(false, err.message, err.detail); }
+  finally { busy(btn, false); }
+});
+$("#btn-revert").addEventListener("click", async () => {
+  if (!(await confirmDialog(t("discardTitle"), t("discardText"), t("discard"), true))) return;
+  setEditor(state.content); state.errLines.clear(); hideResult(); renderEditor();
+});
+$("#btn-save").addEventListener("click", saveEditor);
+async function saveEditor() {
+  const btn = $("#btn-save"); busy(btn, true);
+  try { if (await commit(ta.value)) showResult(true, t("saved")); }
+  catch (err) {
+    if (err.status === 422) markErrors(err.detail);
+    showResult(false, err.status === 422 ? t("validFail") : err.message, err.detail);
+  } finally { busy(btn, false); updateEditorMeta(); }
+}
+
+// ---------- backups ----------
+let backups = null;
+const fmtSize = (n) => n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`;
+const fmtStamp = (s) => { const m = /^(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)(\d\d)/.exec(s); return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]}` : s; };
+async function loadBackups() {
+  const btn = $("#bk-refresh"); busy(btn, true);
+  try { backups = await api("/api/backups"); } catch (err) { toast(err.message, "err"); backups = []; }
+  finally { busy(btn, false); renderBackups(); }
+}
+function renderBackups() {
+  const body = $("#bk-body");
+  if (!backups) { body.innerHTML = `<tr><td colspan="3" class="empty">${esc(t("loading"))}</td></tr>`; return; }
+  if (!backups.length) { body.innerHTML = `<tr><td colspan="3" class="empty"><svg><use href="#i-history"/></svg><div>${esc(t("noBackups"))}</div></td></tr>`; return; }
+  body.innerHTML = backups.map((b) => `<tr>
+    <td class="v">${esc(fmtStamp(b.time))}</td>
+    <td class="v dim" style="color:var(--muted-fg)">${esc(fmtSize(b.size))}</td>
+    <td class="act">
+      <button class="btn ghost" data-act="restore" data-id="${esc(b.id)}"><svg><use href="#i-restore"/></svg>${esc(t("restore"))}</button>
+      <button class="btn ghost icon-btn danger" data-act="del" data-id="${esc(b.id)}" title="${esc(t("delete"))}" aria-label="${esc(t("delete"))}"><svg><use href="#i-trash"/></svg></button>
+    </td></tr>`).join("");
+}
+$("#bk-refresh").addEventListener("click", loadBackups);
+$("#bk-body").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const b = backups.find((x) => x.id === btn.dataset.id); if (!b) return;
+  if (btn.dataset.act === "del") {
+    if (!(await confirmDialog(t("delBkTitle"), t("delBkText", { id: b.id }), t("delete"), true))) return;
+    try { await api("/api/backups/delete", { id: b.id }); toast(t("bkDeleted")); loadBackups(); } catch (err) { toast(err.message, "err"); }
+    return;
+  }
+  if (editorDirty) return toast(t("errDirty"), "err");
+  try {
+    const bk = await api(`/api/backup?id=${encodeURIComponent(b.id)}`);
+    if (!(await reviewDialog({ title: t("restoreTitle"), sub: t("restoreSub", { t: fmtStamp(b.time) }), before: state.content, after: bk.content, okLabel: t("restoreBtn") }))) return;
+    busy(btn, true);
+    await api("/api/backups/restore", { id: b.id });
+    toast(t("restored"));
+    await loadConfig(); loadBackups();
+  } catch (err) { toast(err.message + (err.detail ? `: ${err.detail}` : ""), "err"); busy(btn, false); }
+});
+
+// ---------- shell ----------
+function renderStatus() {
+  $("#st-file").textContent = state.exists ? `${fmtSize(new Blob([state.content]).size)} · ${state.mode}` : t("notCreated");
+  $("#st-hosts").textContent = hosts().filter((b) => b.kind === "Host").length;
+  const v = (state.status?.version || "").replace(/^OpenSSH_/, "").split(/[ ,]/)[0];
+  $("#st-ver").textContent = v || "—"; $("#st-ver").title = state.status?.version || "";
+}
+function renderAll() { renderHosts(); renderStatus(); updateEditorMeta(); if (activePage === "backups") loadBackups(); }
+
+let activePage = "hosts";
+function showPage(name) {
+  activePage = name;
+  $$(".nav-item").forEach((b) => b.classList.toggle("active", b.dataset.page === name));
+  $$(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${name}`));
+  $("#app").classList.remove("nav-open");
+  if (name === "backups" && !backups) loadBackups();
+  if (name === "editor") requestAnimationFrame(syncScroll);
+  store.set("sshui.page", name);
+}
+
+function applyLang() {
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  $$("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  $$("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  $$("#lang-seg button").forEach((b) => b.classList.toggle("on", b.dataset.lang === lang));
+  renderHosts(); renderStatus(); updateEditorMeta(); if (backups) renderBackups();
+}
+function applyTheme(mode) {
+  if (mode === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = mode;
+  $$("#theme-seg button").forEach((b) => b.classList.toggle("on", b.dataset.theme === mode));
+}
+
+$$(".nav-item").forEach((b) => b.addEventListener("click", () => showPage(b.dataset.page)));
+$$("[data-menu]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); $("#app").classList.toggle("nav-open"); }));
+$(".main").addEventListener("click", () => $("#app").classList.remove("nav-open"));
+$$("#theme-seg button").forEach((b) => b.addEventListener("click", () => { store.set("sshui.theme", b.dataset.theme); applyTheme(b.dataset.theme); }));
+$$("#lang-seg button").forEach((b) => b.addEventListener("click", () => { lang = b.dataset.lang; store.set("sshui.lang", lang); applyLang(); }));
+
+(async function init() {
+  applyTheme(store.get("sshui.theme") || "system");
+  applyLang();
+  loadStatus();
+  try { await loadConfig(); } catch (err) { toast(err.message, "err"); }
+  const p = store.get("sshui.page");
+  if (p && $(`#page-${p}`)) showPage(p);
+})();
+</script>
+</body>
+</html>

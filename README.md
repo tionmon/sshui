@@ -1,180 +1,127 @@
 # SSHUI
 
-[中文文档](./README-zh.md)
+[中文](./README-zh.md)
 
-> SSHUI is a fork of [baerwang/ssh-at](https://github.com/baerwang/ssh-at) (Apache-2.0), maintained independently with a redesigned interface. The visual style is inspired by [Storage UI](https://github.com/hahahumble/storageui).
+**One place for the config files behind your SSH and developer tools.** Use it on your desktop, or as a small web page on a server.
 
-## Overview
+SSHUI replaces hand-editing dotfiles with a visual editor that knows what each file means. That covers `~/.ssh/config`, SSH keys, the hosts file, proxy settings, package-manager mirrors, AI coding CLIs and more. Every change is backed up first, and you can see exactly what will be written.
 
-**SSHUI** is a desktop GUI tool for managing SSH keys, hosts, and configurations. Generate keys, edit `~/.ssh/config` visually, and keep automatic backups—all in one app.
+## Editions
 
-Built with Tauri 2, React, and Rust for a native cross-platform experience.
+| | **SSHUI Desktop** | **SSHUI Lite** |
+|---|---|---|
+| What | Native app for your own computer | Web page for a Linux server |
+| Platforms | Windows, macOS, Linux | Debian / Ubuntu, behind Caddy (HTTPS + login) |
+| Covers | SSH, hosts file, proxies, dev tools, AI CLIs, sing-box, WSL | The server's `~/.ssh/config` |
+| Install | [Releases](https://github.com/tionmon/sshui/releases) | `bash lite/deploy.sh <server>` |
+| Docs | [below](#sshui-desktop) | [lite/README.md](./lite/README.md) |
 
-## Features
+---
 
-- **📝 SSH Config Management**
-  - Visual editor for `~/.ssh/config`
-  - Add, edit, delete, and search SSH hosts
-  - Real-time syntax highlighting with Monaco Editor
-  - Automatic backup before every save
+## SSHUI Desktop
 
-- **🔑 SSH Key Management**
-  - Generate SSH keys (RSA, Ed25519, ECDSA)
-  - View key fingerprints
-  - One-click copy public keys to clipboard
-  - Delete keys with confirmation
+### What you can manage
 
-- **💾 Backup & Restore**
-  - Automatic timestamped backups
-  - Browse and restore previous configs
-  - Delete old backups
+**SSH**
+- **Hosts**: list, search, add, edit and delete `Host` entries in `~/.ssh/config`, including ProxyJump / ProxyCommand and advanced options.
+- **SSH keys**: generate Ed25519, RSA or ECDSA keys, view fingerprints, copy public keys and delete with confirmation.
+- **Config editor**: edit the raw file with syntax highlighting (Monaco).
+- **Backups**: a timestamped copy before every save; browse, restore and delete them.
 
-- **🗂️ Hosts File Management**
-  - Edit the system hosts file with syntax highlighting
-  - Save multiple hosts schemes (e.g. Development, Staging, Ad blocking)
-  - One-click switching from the app or the system tray menu
-  - Requests administrator rights only when needed (UAC / macOS prompt / pkexec)
-  - Automatic backup of the previous hosts file and DNS cache flush on every switch
+**System**
+- **Hosts file**: keep several hosts schemes (development, staging, ad blocking…) and switch between them from the app or the tray. Administrator rights are requested only for the switch. The previous file is backed up and the DNS cache is flushed.
+- **Proxy profiles**: save proxies and apply one in a click to git, npm, pip, Cargo, Claude Code, `HTTP(S)_PROXY` and the Windows system proxy. The app shows which tools match the active profile.
+- **sing-box**: edit nodes, groups, rule sets and routing rules without writing JSON. You can import share links (vless, vmess, trojan, ss, hysteria2, tuic, anytls, wireguard…) or subscriptions, and build relay chains with loop prevention. Renames update every reference. Saving shows a diff, runs `sing-box check` and keeps a backup.
+- **Windows**: user `PATH` and environment variables, WSL (`.wslconfig`) settings and distributions.
 
-- **🌐 Proxy Profiles**
-  - Save proxies (e.g. a local Clash port, the office proxy) and switch them in one click, also from the tray
-  - Applies to git, npm, pip, Cargo, Claude Code, the HTTP(S)_PROXY environment variables and the Windows system proxy
-  - Shows which tools match the active profile
+**Developer tools**
+- **GitHub**: `gh` login, SSH access test, git identity and proxy.
+- **npm, Python (pip), Rust (Cargo / rustup), Go**: registry mirrors with speed tests, proxies and tokens.
+- **Docker**: registry logins and Docker Hub mirrors.
+- **Codex CLI and Claude Code**: save API profiles (base URL, key, models) and switch them from the app or the tray. You can also set the model and approvals/permissions, and edit `AGENTS.md` / `CLAUDE.md`, prompts, subagents, slash commands, output styles and skills, or the raw `config.toml` / `settings.json`.
 
-- **🕸️ sing-box Config Editor** (enable in Settings → Advanced)
-  - Edit nodes, node groups, rule sets and routing rules of any sing-box config.json without writing JSON
-  - Import share links (vless, vmess, trojan, ss, hysteria2, tuic, anytls, wireguard…) or base64 subscription content
-  - Relay (detour) chains with a preview and loop prevention; hide or disable nodes and bring them back later
-  - Renames and deletes update every reference; problems are flagged while editing
-  - Saving shows a diff, runs `sing-box check` when available and keeps a `.sshui-bak` backup
+Hosts, keys, the editor and backups are always on. The other pages can be shown or hidden in **Settings → Advanced**. Tools that aren't installed get a "not installed" view, and nothing is read or started for them.
 
-- **🧰 Developer & System Tools** (each can be shown or hidden in Settings → Advanced)
-  - GitHub: gh login, SSH access test, git identity and proxy
-  - npm, pip, Cargo/rustup and Go: registry mirrors with speed tests, proxies and tokens
-  - Docker: registry logins and Docker Hub mirrors
-  - Codex CLI and Claude Code: saved API profiles (base URL, key, models) switched in one click or from the tray; model, approvals/permissions; edit AGENTS.md / CLAUDE.md, custom prompts, subagents, slash commands, output styles and skills; raw config.toml / settings.json editor
-  - Windows: user PATH and environment variable editor, WSL (.wslconfig) settings and distributions
-  - Tools that aren't installed show a "not installed" view; nothing is read or started for them
+**Everywhere:** English / 中文, light / dark / system theme, a system tray icon (closing the window minimises to the tray), and a neutral design with Geist type.
 
-- **🌍 Multi-language Support**
-  - English / 中文
-  - Auto-detect system language
+### Install
 
-- **🎨 Modern UI**
-  - Clean neutral design system (Geist type, hairline borders, soft status badges) built on MUI
-  - Light / Dark / System theme, switchable from the sidebar
-  - System tray integration (minimize to tray, not quit)
-  - macOS Dock icon auto-hide when minimized
+Download the latest build from [Releases](https://github.com/tionmon/sshui/releases):
 
-## Screenshots
+| Platform | File |
+|---|---|
+| Windows (x64) | `SSHUI_<version>_x64-setup.exe` |
+| macOS, Apple Silicon | `SSHUI_<version>_aarch64.dmg` |
+| macOS, Intel | `SSHUI_<version>_x64.dmg` |
+| Linux (x64) | `.AppImage`, `.deb` or `.rpm` |
 
-_Screenshots below predate the UI redesign and will be refreshed._
+### Where it keeps its data
 
-### Hosts Management
-![Hosts Management](./screenshots/hosts.png)
+Everything SSHUI keeps for itself is in `~/.ssh-at/`:
 
-### SSH Keys
-![SSH Keys](./screenshots/keys.png)
+| Path | Contents |
+|---|---|
+| `settings.json` | App settings and which pages are shown |
+| `backups/` | Backups of `~/.ssh/config` |
+| `creds/` | Keys generated in the app |
+| `hosts-schemes.json`, `hosts-backups/` | Hosts schemes and backups of the system hosts file |
+| `env-backups/` | Backups of environment variables (Windows) |
+| `proxy-profiles.json` | Saved proxy profiles |
+| `agent-profiles.json` | Codex CLI / Claude Code API profiles, **including API keys** |
+| `singbox.json` | sing-box editor state |
 
-### Config Editor
-![Config Editor](./screenshots/editor.png)
+When the raw editors and the sing-box editor save a tool's own file, they keep the previous version next to it as `<file>.sshui-bak`.
 
-### Backups
-![Backups](./screenshots/backups.png)
+### Build from source
 
-### Settings
-![Settings](./screenshots/settings.png)
-
-## Tech Stack
-
-**Frontend:**
-- React 19 + TypeScript
-- Material-UI (MUI)
-- Monaco Editor
-- React Router
-- React Query
-- i18next
-
-**Backend:**
-- Rust
-- Tauri 2
-- Tokio (async runtime)
-- Custom SSH config parser
-
-**Build:**
-- Vite
-- pnpm
-
-## Installation
-
-### Download Pre-built Binaries
-
-Go to [Releases](https://github.com/tionmon/sshui/releases) and download:
-
-- **macOS**: `.dmg` (Universal binary for Intel & Apple Silicon)
-- **Windows**: `.msi`
-- **Linux**: `.AppImage` or `.deb`
-
-#### Build from Source
-
-**Prerequisites:**
-- Node.js 20+
-- pnpm 8+
-- Rust 1.88+
-- Platform-specific dependencies:
-  - **macOS**: Xcode Command Line Tools, `create-dmg` (`brew install create-dmg`)
-  - **Linux**: `libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf`
-  - **Windows**: WebView2 (usually pre-installed on Windows 10+)
-
-**Build Steps:**
+Requirements: Node.js 20+, pnpm 8+, Rust 1.88+, and the Tauri prerequisites for your platform:
+- **Windows**: WebView2 (included in Windows 10/11)
+- **macOS**: Xcode Command Line Tools
+- **Linux**: `libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf`
 
 ```bash
-# Clone the repository
 git clone https://github.com/tionmon/sshui.git
 cd sshui
-
-# Install dependencies
 pnpm install
-
-# Development mode
-pnpm tauri dev
-
-# Production build
-pnpm tauri build
+pnpm tauri dev      # run in development
+pnpm tauri build    # installers in src-tauri/target/release/bundle/
 ```
 
-Build outputs:
-- macOS: `src-tauri/target/release/bundle/macos/SSHUI.app` and `.dmg`
-- Windows: `src-tauri/target/release/bundle/msi/*.msi`
-- Linux: `src-tauri/target/release/bundle/appimage/*.AppImage` and `.deb`
+### Built with
 
-## Usage
+React 19, TypeScript, MUI, Monaco Editor, TanStack Query and i18next on the front end, with Rust and Tauri 2 behind it.
 
-1. **Launch the app**
-   - macOS: Drag `SSHUI.app` to `/Applications` and launch
-   - Windows: Run the `.msi` installer
-   - Linux: Make `.AppImage` executable and run, or install `.deb`
+---
 
-2. **Manage SSH Hosts**
-   - Navigate to **Hosts** tab
-   - Click **+** to add a new host
-   - Edit inline or use the **Config Editor** for raw editing
+## SSHUI Lite
 
-3. **Generate SSH Keys**
-   - Go to **Keys** tab
-   - Click **Generate Key**
-   - Choose algorithm (Ed25519 recommended), name, passphrase
-   - Keys are saved to `~/.ssh-at/creds/`
+A lightweight web version for headless Linux servers. It edits the server's `~/.ssh/config` from a browser and has three pages:
+- a Hosts table
+- a raw config editor
+- backups with restore
 
-4. **Backups**
-   - Visit **Backups** tab to view all automatic backups
-   - Restore or delete as needed
+Each save shows a diff, is checked with `ssh -G` and is written with mode 600. It's a single Python file using only the standard library, behind Caddy with HTTPS and a login.
 
-5. **Settings**
-   - Toggle theme (light/dark)
-   - Switch language (English/中文)
-   - Open config directory
+```bash
+bash lite/deploy.sh <ssh-host> SSHUI_DOMAIN=ssh.example.com   # first install
+bash lite/deploy.sh <ssh-host>                                 # updates
+```
+
+The installer is idempotent. It also fixes `~/.ssh` permissions (private keys → 600). Options, details and troubleshooting are in **[lite/README.md](./lite/README.md)**.
+
+---
+
+## Repository layout
+
+| Path | |
+|---|---|
+| `src/` | Desktop front end (React) |
+| `src-tauri/` | Desktop back end (Tauri commands) |
+| `crates/ssh-at-core`, `crates/ssh-at-storage` | SSH config parser, key handling, backups |
+| `lite/` | SSHUI Lite: web app, installer and deploy script |
 
 ## License
 
-Apache 2.0
+[Apache 2.0](./LICENSE).
+
+SSHUI started from [baerwang/ssh-at](https://github.com/baerwang/ssh-at) (Apache-2.0). Its visual style is inspired by [Storage UI](https://github.com/hahahumble/storageui).
