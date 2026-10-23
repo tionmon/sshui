@@ -4,13 +4,27 @@
 
 > SSHUI 派生自 [baerwang/ssh-at](https://github.com/baerwang/ssh-at)（Apache-2.0），独立维护并重新设计了界面。视觉风格参考 [Storage UI](https://github.com/hahahumble/storageui)。
 
-## 概述
+## 两个版本
+
+SSHUI 有两个版本，界面风格一致：
+
+| | **SSHUI 桌面版** | **SSHUI Lite** |
+|---|---|---|
+| 运行方式 | 原生应用（Tauri），支持 macOS、Windows、Linux | Linux 服务器上的轻量 Web 服务，由 Caddy 反向代理 |
+| 管理内容 | `~/.ssh/config`、SSH 密钥、hosts 文件、代理、开发工具、sing-box… | 仅 `~/.ssh/config` |
+| 访问方式 | 本地窗口 + 系统托盘 | 浏览器，HTTPS + 登录认证 |
+| 依赖 | 安装包自带 | 仅需 Python 3 标准库，无第三方包 |
+| 文档 | 见下方 [桌面版](#桌面版) | [lite/README-zh.md](./lite/README-zh.md) |
+
+## 桌面版
+
+### 概述
 
 **SSHUI** 是一个 SSH 密钥、主机和配置管理的桌面工具。生成密钥、可视化编辑 `~/.ssh/config`、自动备份——都在一个应用里。
 
 基于 Tauri 2、React 和 Rust 构建的跨平台原生应用。
 
-## 功能特性
+### 功能特性
 
 - **📝 SSH 配置管理**
   - `~/.ssh/config` 可视化编辑器
@@ -66,26 +80,26 @@
   - 系统托盘集成（最小化到托盘，不退出）
   - macOS Dock 图标在最小化时自动隐藏
 
-## 界面截图
+### 界面截图
 
 _以下截图为界面重设计之前的版本，后续将更新。_
 
-### 主机管理
+#### 主机管理
 ![主机管理](./screenshots/hosts.png)
 
-### SSH 密钥
+#### SSH 密钥
 ![SSH 密钥](./screenshots/keys.png)
 
-### 配置编辑器
+#### 配置编辑器
 ![配置编辑器](./screenshots/editor.png)
 
-### 备份管理
+#### 备份管理
 ![备份管理](./screenshots/backups.png)
 
-### 设置
+#### 设置
 ![设置](./screenshots/settings.png)
 
-## 技术栈
+### 技术栈
 
 **前端：**
 - React 19 + TypeScript
@@ -105,9 +119,9 @@ _以下截图为界面重设计之前的版本，后续将更新。_
 - Vite
 - pnpm
 
-## 安装
+### 安装
 
-### 下载预编译版本
+#### 下载预编译版本
 
 前往 [Releases](https://github.com/tionmon/sshui/releases) 下载：
 
@@ -115,7 +129,7 @@ _以下截图为界面重设计之前的版本，后续将更新。_
 - **Windows**：`.msi`
 - **Linux**：`.AppImage` 或 `.deb`
 
-### 从源码构建
+#### 从源码构建
 
 **前置要求：**
 - Node.js 20+
@@ -148,7 +162,7 @@ pnpm tauri build
 - Windows：`src-tauri/target/release/bundle/msi/*.msi`
 - Linux：`src-tauri/target/release/bundle/appimage/*.AppImage` 和 `.deb`
 
-## 使用方法
+### 使用方法
 
 1. **启动应用**
    - macOS：将 `SSHUI.app` 拖到 `/Applications` 并启动
@@ -174,6 +188,21 @@ pnpm tauri build
    - 切换主题（明/暗）
    - 切换语言（英文/中文）
    - 打开配置目录
+
+## SSHUI Lite（Linux 服务器版）
+
+面向无图形界面 Linux 服务器的轻量 Web 版：在浏览器里编辑服务器上的 `~/.ssh/config`。
+包含主机列表（添加 / 编辑 / 删除 `Host` 条目）、原始配置编辑器，以及自动备份与恢复。
+每次保存都会先显示差异、用 `ssh -G` 校验，然后以 600 权限原子写入。
+
+在本仓库的检出目录中，一条命令即可部署或更新：
+
+```bash
+bash lite/deploy.sh <ssh 主机> SSHUI_DOMAIN=ssh.example.com   # 首次安装
+bash lite/deploy.sh <ssh 主机>                                 # 之后更新
+```
+
+参数说明、安装脚本做了什么以及故障排查，见 **[lite/README-zh.md](./lite/README-zh.md)**。
 
 ## 许可证
 

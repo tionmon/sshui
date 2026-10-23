@@ -4,13 +4,27 @@
 
 > SSHUI is a fork of [baerwang/ssh-at](https://github.com/baerwang/ssh-at) (Apache-2.0), maintained independently with a redesigned interface. The visual style is inspired by [Storage UI](https://github.com/hahahumble/storageui).
 
-## Overview
+## Editions
+
+SSHUI comes in two editions that share the same look:
+
+| | **SSHUI Desktop** | **SSHUI Lite** |
+|---|---|---|
+| Runs as | Native app (Tauri) on macOS, Windows, Linux | Small web service on a Linux server, behind Caddy |
+| Manages | `~/.ssh/config`, SSH keys, hosts file, proxies, dev tools, sing-box… | `~/.ssh/config` only |
+| Access | Local window + system tray | Browser, over HTTPS with a login |
+| Dependencies | Bundled installer | Python 3 standard library, no packages |
+| Docs | [Desktop app](#desktop-app) below | [lite/README.md](./lite/README.md) |
+
+## Desktop app
+
+### Overview
 
 **SSHUI** is a desktop GUI tool for managing SSH keys, hosts, and configurations. Generate keys, edit `~/.ssh/config` visually, and keep automatic backups—all in one app.
 
 Built with Tauri 2, React, and Rust for a native cross-platform experience.
 
-## Features
+### Features
 
 - **📝 SSH Config Management**
   - Visual editor for `~/.ssh/config`
@@ -66,26 +80,26 @@ Built with Tauri 2, React, and Rust for a native cross-platform experience.
   - System tray integration (minimize to tray, not quit)
   - macOS Dock icon auto-hide when minimized
 
-## Screenshots
+### Screenshots
 
 _Screenshots below predate the UI redesign and will be refreshed._
 
-### Hosts Management
+#### Hosts Management
 ![Hosts Management](./screenshots/hosts.png)
 
-### SSH Keys
+#### SSH Keys
 ![SSH Keys](./screenshots/keys.png)
 
-### Config Editor
+#### Config Editor
 ![Config Editor](./screenshots/editor.png)
 
-### Backups
+#### Backups
 ![Backups](./screenshots/backups.png)
 
-### Settings
+#### Settings
 ![Settings](./screenshots/settings.png)
 
-## Tech Stack
+### Tech Stack
 
 **Frontend:**
 - React 19 + TypeScript
@@ -105,9 +119,9 @@ _Screenshots below predate the UI redesign and will be refreshed._
 - Vite
 - pnpm
 
-## Installation
+### Installation
 
-### Download Pre-built Binaries
+#### Download Pre-built Binaries
 
 Go to [Releases](https://github.com/tionmon/sshui/releases) and download:
 
@@ -148,7 +162,7 @@ Build outputs:
 - Windows: `src-tauri/target/release/bundle/msi/*.msi`
 - Linux: `src-tauri/target/release/bundle/appimage/*.AppImage` and `.deb`
 
-## Usage
+### Usage
 
 1. **Launch the app**
    - macOS: Drag `SSHUI.app` to `/Applications` and launch
@@ -174,6 +188,21 @@ Build outputs:
    - Toggle theme (light/dark)
    - Switch language (English/中文)
    - Open config directory
+
+## SSHUI Lite (Linux server)
+
+A lightweight web version for headless Linux servers: edit the server's `~/.ssh/config` from a browser.
+It has a Hosts table (add / edit / delete `Host` entries), a raw config editor, and automatic backups with restore.
+Every save is shown as a diff, checked with `ssh -G` first and written atomically with mode 600.
+
+Deploy or update from a checkout of this repo with one command:
+
+```bash
+bash lite/deploy.sh <ssh-host> SSHUI_DOMAIN=ssh.example.com   # first install
+bash lite/deploy.sh <ssh-host>                                 # later updates
+```
+
+See **[lite/README.md](./lite/README.md)** for options, what the installer does and troubleshooting.
 
 ## License
 
